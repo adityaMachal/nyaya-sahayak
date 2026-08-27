@@ -1,0 +1,12 @@
+[
+  {"id": 1,  "question": "What are the fundamental rights guaranteed by the Indian Constitution?",           "category": "constitution",     "expected_source": "constitution.json"},
+  {"id": 2,  "question": "What is Section 302 of the IPC and what is its BNS equivalent?",                   "category": "ipc_bns",          "expected_source": "ipc_bns_mapping.json"},
+  {"id": 3,  "question": "How do I file a consumer complaint online?",                                       "category": "consumer",         "expected_source": "consumer_protection.md"},
+  {"id": 4,  "question": "What are the grounds for divorce under Hindu Marriage Act?",                        "category": "family",           "expected_source": "family_laws.md"},
+  {"id": 5,  "question": "What is the punishment for cybercrime in India?",                                   "category": "ipc_bns",          "expected_source": "ipc_bns_mapping.json"},
+  {"id": 6,  "question": "How do I file an RTI application and what is the fee?",                             "category": "rti",              "expected_source": "rti_act.md"},
+  {"id": 7,  "question": "What are a tenant's rights against illegal eviction?",                              "category": "property",         "expected_source": "property_laws.md"},
+  {"id": 8,  "question": "What is the limitation period for filing a consumer complaint?",                    "category": "consumer",         "expected_source": "mcp_tool: check_limitation_period"},
+  {"id": 9,  "question": "Can an employer terminate an employee without notice in India?",                    "category": "labor",            "expected_source": "labor_laws.md"},
+  {"id": 10, "question": "What are the penalties for drunk driving under Motor Vehicles Act?",                "category": "motor_vehicle",    "expected_source": "motor_vehicle_act.md"}
+]
