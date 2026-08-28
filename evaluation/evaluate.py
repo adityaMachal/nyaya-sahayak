@@ -12,7 +12,7 @@ PROJECT_ROOT = str(Path(__file__).parent.parent)
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-from main import app
+from core.pipeline import app
 
 async def evaluate_queries():
     queries_file = Path(__file__).parent / "test_queries.json"
