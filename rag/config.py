@@ -17,4 +17,4 @@ DEVICE = "cuda"  # Leverages RTX 3050 (fallback to cpu if unavailable)
 TOP_K = 5        # Number of chunks to retrieve per query
 
 # LLM
-LLM_MODEL = "gemini-2.5-flash"
+LLM_MODEL = "gemini-3.8-flash"

@@ -48,6 +48,66 @@ if PROJECT_ROOT not in sys.path:
 from rag.retrieval import query_database
 from rag import config
 
+# ── Direct Tool Registry ──────────────────────────────────────────
+# Import MCP tool functions directly instead of spawning a subprocess
+# per request.  The MCP server (mcp_server/server.py) still exists
+# for external MCP clients (IDEs, other agents); this registry is
+# for internal pipeline use, eliminating ~2-4s cold-start overhead.
+
+from mcp_server.server import (
+    search_bns_section,
+    check_limitation_period,
+    find_relevant_acts,
+    search_legal_database,
+)
+
+TOOL_REGISTRY: dict[str, dict] = {
+    "search_bns_section": {
+        "fn": search_bns_section,
+        "description": (
+            "Search Indian Penal Code (IPC) and Bharatiya Nyaya Sanhita (BNS) sections. "
+            "Accepts a section number (e.g. '420', '302') or a keyword (e.g. 'theft', 'murder')."
+        ),
+        "parameters": {
+            "query": {"type": "string", "description": "Section number or keyword to search for."}
+        },
+    },
+    "check_limitation_period": {
+        "fn": check_limitation_period,
+        "description": "Look up the statute of limitations (time limit) for filing a legal case in India.",
+        "parameters": {
+            "case_type": {
+                "type": "string",
+                "description": (
+                    "Type of case. One of: civil_suit, criminal_complaint, consumer_complaint, "
+                    "cheque_bounce, property_dispute, motor_accident, labor_dispute, divorce"
+                ),
+            }
+        },
+    },
+    "find_relevant_acts": {
+        "fn": find_relevant_acts,
+        "description": "Given a situation description, find the most relevant Indian laws and acts.",
+        "parameters": {
+            "situation": {
+                "type": "string",
+                "description": "Plain English description (e.g. 'my employer hasn't paid salary for 3 months')",
+            }
+        },
+    },
+    "search_legal_database": {
+        "fn": search_legal_database,
+        "description": (
+            "Search the Nyaya Sahayak legal database for Indian laws, IPC/BNS mappings, "
+            "constitutional articles, and consumer/labor/property laws."
+        ),
+        "parameters": {
+            "query": {"type": "string", "description": "The natural language search query."}
+        },
+    },
+}
+
+
 
 # ── Gemini Client ──────────────────────────────────────────────────
 
@@ -68,6 +128,7 @@ MODEL = config.LLM_MODEL
 
 def gemini_generate(prompt: str, max_retries: int = 3) -> str:
     """Call Gemini with automatic retry on transient errors (503, 429, etc.)."""
+    import re
     for attempt in range(1, max_retries + 1):
         try:
             response = client.models.generate_content(
@@ -79,8 +140,13 @@ def gemini_generate(prompt: str, max_retries: int = 3) -> str:
             error_str = str(e)
             is_retryable = any(code in error_str for code in ["503", "429", "UNAVAILABLE", "RESOURCE_EXHAUSTED"])
             if is_retryable and attempt < max_retries:
-                wait = 2 ** attempt  # 2s, 4s
-                print(f"  ⏳ Gemini API busy (attempt {attempt}/{max_retries}), retrying in {wait}s...")
+                # Check if server suggested a specific retry delay
+                delay_match = re.search(r'retry in ([\d\.]+)s', error_str, re.IGNORECASE)
+                if delay_match:
+                    wait = min(float(delay_match.group(1)) + 1.0, 60.0)
+                else:
+                    wait = 2 ** attempt  # 2s, 4s
+                print(f"  ⏳ Gemini API rate-limited/busy (attempt {attempt}/{max_retries}), retrying in {wait:.1f}s...")
                 time.sleep(wait)
             else:
                 raise
@@ -217,46 +283,34 @@ Original: {question}"""
 
 
 # ══════════════════════════════════════════════════════════════════
-# NODE 3: ACTION — MCP Client over stdio
+# NODE 3: ACTION — Direct tool execution
 # ══════════════════════════════════════════════════════════════════
 
-async def action_node(state: AgentState) -> dict:
-    """Connect to FastMCP server via stdio and execute the appropriate tool."""
+def action_node(state: AgentState) -> dict:
+    """Select and execute the appropriate legal tool via direct function call.
 
-    from mcp.client.stdio import stdio_client, StdioServerParameters
-    from mcp.client.session import ClientSession
+    Previously spawned a new Python subprocess via MCP stdio_client on every
+    invocation (~2-4s cold-start overhead).  Now calls tool functions directly
+    from the mcp_server module while keeping the same Gemini-driven tool
+    selection logic.  The MCP server still exists for external clients.
+    """
 
     question = state["user_question"]
 
-    # Start MCP server as a subprocess
-    server_params = StdioServerParameters(
-        command=sys.executable,  # Use the same Python interpreter
-        args=["-m", "mcp_server.server"],
-        cwd=PROJECT_ROOT,
-    )
+    # Build tool descriptions for Gemini (same format as before)
+    tool_descriptions = []
+    for name, info in TOOL_REGISTRY.items():
+        params = json.dumps(info["parameters"], indent=2)
+        tool_descriptions.append(
+            f"Tool: {name}\n"
+            f"Description: {info['description']}\n"
+            f"Parameters: {params}"
+        )
 
-    async with stdio_client(server_params) as streams:
-        async with ClientSession(*streams) as session:
-            await session.initialize()
+    tools_text = "\n---\n".join(tool_descriptions)
 
-            # Step 1: Fetch available tools from the MCP server
-            tools_response = await session.list_tools()
-            tools = tools_response.tools
-
-            # Build a description of available tools for Gemini
-            tool_descriptions = []
-            for tool in tools:
-                params = json.dumps(tool.inputSchema.get("properties", {}), indent=2)
-                tool_descriptions.append(
-                    f"Tool: {tool.name}\n"
-                    f"Description: {tool.description}\n"
-                    f"Parameters: {params}"
-                )
-
-            tools_text = "\n---\n".join(tool_descriptions)
-
-            # Step 2: Ask Gemini which tool to call and with what arguments
-            tool_selection_prompt = f"""You are an AI that selects the right legal tool to answer a question.
+    # Ask Gemini which tool to call and with what arguments
+    tool_selection_prompt = f"""You are an AI that selects the right legal tool to answer a question.
 
 Available tools:
 {tools_text}
@@ -271,53 +325,55 @@ If it asks about time limits or deadlines, use "check_limitation_period".
 If it describes a situation, use "find_relevant_acts".
 For general legal searches, use "search_legal_database"."""
 
-            decision_text = gemini_generate(tool_selection_prompt)
-            # Clean up any markdown code fences
-            decision_text = decision_text.replace("```json", "").replace("```", "").strip()
+    decision_text = gemini_generate(tool_selection_prompt)
+    # Clean up any markdown code fences
+    decision_text = decision_text.replace("```json", "").replace("```", "").strip()
 
-            try:
-                decision = json.loads(decision_text)
-            except json.JSONDecodeError:
-                # Fallback: use search_legal_database with the question
-                decision = {
-                    "tool_name": "search_legal_database",
-                    "arguments": {"query": question}
-                }
+    try:
+        decision = json.loads(decision_text)
+    except json.JSONDecodeError:
+        # Fallback: use search_legal_database with the question
+        decision = {
+            "tool_name": "search_legal_database",
+            "arguments": {"query": question}
+        }
 
-            tool_name = decision["tool_name"]
-            tool_args = decision.get("arguments", {})
+    tool_name = decision["tool_name"]
+    tool_args = decision.get("arguments", {})
 
-            print(f"  ⚡ Action → calling MCP tool: {tool_name}({tool_args})")
+    # Validate tool name against registry
+    if tool_name not in TOOL_REGISTRY:
+        tool_name = "search_legal_database"
+        tool_args = {"query": question}
 
-            # Step 3: Execute the tool via MCP
-            result = await session.call_tool(tool_name, arguments=tool_args)
+    print(f"  ⚡ Action → calling tool: {tool_name}({tool_args})")
 
-            # Extract the text content from the result
-            tool_output = ""
-            for content_block in result.content:
-                if hasattr(content_block, "text"):
-                    tool_output += content_block.text
+    # Execute the tool directly (no subprocess!)
+    tool_fn = TOOL_REGISTRY[tool_name]["fn"]
+    tool_output = tool_fn(**tool_args)
 
-            # Try to parse as JSON for structured results
-            try:
-                tool_output_parsed = json.loads(tool_output)
-            except (json.JSONDecodeError, TypeError):
-                tool_output_parsed = {"raw_output": tool_output}
+    # Normalize output to a serializable dict
+    if isinstance(tool_output, str):
+        tool_output_parsed = {"raw_output": tool_output}
+    elif isinstance(tool_output, list):
+        tool_output_parsed = {"results": tool_output}
+    else:
+        tool_output_parsed = tool_output
 
-            print(f"  ✅ Action → got result from {tool_name}")
+    print(f"  ✅ Action → got result from {tool_name}")
 
-            return {
-                "tool_results": [tool_output_parsed],
-                "tool_name_used": tool_name,
-                "messages": [{"role": "action", "content": f"Called {tool_name} with {tool_args}"}]
-            }
+    return {
+        "tool_results": [tool_output_parsed],
+        "tool_name_used": tool_name,
+        "messages": [{"role": "action", "content": f"Called {tool_name} with {tool_args}"}]
+    }
 
 
 # ══════════════════════════════════════════════════════════════════
 # NODE 4: BOTH — Research + Action combined
 # ══════════════════════════════════════════════════════════════════
 
-async def both_node(state: AgentState) -> dict:
+def both_node(state: AgentState) -> dict:
     """Execute BOTH researcher and action pipelines, merge results."""
 
     print("  🔄 Both → running Research + Action in sequence...")
@@ -325,8 +381,8 @@ async def both_node(state: AgentState) -> dict:
     # Run researcher first (sync)
     research_result = researcher_node(state)
 
-    # Run action (async)
-    action_result = await action_node(state)
+    # Run action (sync)
+    action_result = action_node(state)
 
     # Merge results
     return {
