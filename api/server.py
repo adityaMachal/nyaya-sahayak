@@ -1,5 +1,4 @@
-"""
-Nyaya Sahayak — FastAPI Backend
+"""Nyaya Sahayak — FastAPI Backend
 
 REST + SSE API designed for a Next.js frontend.
 
