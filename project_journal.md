@@ -245,8 +245,31 @@ A hybrid architecture combining **Retrieval-Augmented Generation (RAG)** over ve
   2. **Model Upgrade:** Updated `LLM_MODEL = "gemini-3.8-flash"` in [`rag/config.py`](file:///home/adi/Documents/projects/nyaya-sahayak/rag/config.py).
   3. **Intelligent 429 Retry Backoff:** Enhanced `gemini_generate()` in [`core/pipeline.py`](file:///home/adi/Documents/projects/nyaya-sahayak/core/pipeline.py) to parse Google API's rate-limit response strings (`Please retry in Xs`) and back off dynamically rather than failing immediately.
 - **Measured Result:**
-  - `action_node` tool execution dropped from **~2.5s to <1ms** in-memory execution.
-  - Verified both `action` and `both` LangGraph pipelines successfully with zero subprocess stalls.
+### Issue #3 Architecture: Clean Pydantic Data Contracts for RAG
+- **Date:** 2026-10-19
+- **Target Files:** [`rag/retrieval.py`](file:///home/adi/Documents/projects/nyaya-sahayak/rag/retrieval.py), [`core/pipeline.py`](file:///home/adi/Documents/projects/nyaya-sahayak/core/pipeline.py), [`mcp_server/server.py`](file:///home/adi/Documents/projects/nyaya-sahayak/mcp_server/server.py)
+- **Problem Diagnosed:**
+  In [`rag/retrieval.py`](file:///home/adi/Documents/projects/nyaya-sahayak/rag/retrieval.py), `query_database()` previously flattened ChromaDB query results into an ASCII string separated by arbitrary dashed delimiters (`"-" * 50`).
+  In [`core/pipeline.py`](file:///home/adi/Documents/projects/nyaya-sahayak/core/pipeline.py), the `researcher_node` had to parse that string back using `result_text.split("-" * 50)` and re-hash string slices for de-duplication:
+  ```python
+  # Old Anti-Pattern (String serialization / de-serialization)
+  sections = result_text.split("-" * 50)
+  for section in sections:
+      content_hash = hash(section[:200])
+      ...
+  ```
+  This anti-pattern caused three major issues:
+  1. **Loss of Metadata:** Dropped vector cosine distances, unique chunk IDs, statutory Act titles, and section headings.
+  2. **Fragility:** Any change to the ASCII separator broke multi-agent state parsing.
+  3. **Poor Prompt Attribution:** The `explainer_node` received raw unformatted text blocks without explicit statutory act names or section boundaries.
+- **Solution:**
+  1. **Pydantic Data Contract:** Created `RetrievedChunk` model containing `id`, `text`, `source`, `doc_type`, `act_title`, `section_heading`, `distance`, and `metadata`.
+  2. **Structured Query Output:** Updated `query_database()` to return `list[RetrievedChunk]`. Added `format_chunks_for_display()` for human-readable outputs and backwards-compatible MCP tool responses.
+  3. **O(1) Hash-Set De-duplication:** Refactored `researcher_node` to de-duplicate chunks instantly by `chunk.id` without string regex slicing.
+  4. **Attributed Explainer Synthesis:** Updated `explainer_node` to format research findings using rich statutory headers: `### [source.md] Act Title - Section Heading`.
+- **Measured Result:**
+  - Unit tests verified 100% typed object validation and field retention.
+  - End-to-end multi-query research pipeline verified with zero string-splitting overhead.
 
 ---
 
@@ -259,6 +282,7 @@ A hybrid architecture combining **Retrieval-Augmented Generation (RAG)** over ve
 | **2026-10-17** | RAG Retrieval Path | Embedding + ChromaDB warm latency | ~7.2s / call | **0.005s / call** | **1,128.2× faster** (~14s saved/turn) |
 | **2026-10-17** | Tool Execution Path | Subprocess MCP client startup | ~2.5s / invocation | **<0.001s / invocation** | **Subprocess eliminated** (~2.5s saved/turn) |
 | **2026-10-17** | LLM Engine | Foundation model & resilience | gemini-2.5-flash | **gemini-3.8-flash** | Deprecation fixed + 429 backoff resilience |
+| **2026-10-19** | RAG Data Pipeline | Inter-node chunk serialization | ASCII `split('-'*50)` | **Pydantic `RetrievedChunk`** | Clean typing + zero parsing fragility |
 
 ---
 
@@ -269,7 +293,7 @@ A hybrid architecture combining **Retrieval-Augmented Generation (RAG)** over ve
 - [x] **Frontend Landing Page:** Next.js 15 + Tailwind CSS v4 responsive legal landing page.
 - [x] **Issue #1 (Perf):** Lazy module singletons for SentenceTransformer and ChromaDB.
 - [x] **Issue #2 (MCP Architecture):** Direct in-memory tool execution registry eliminating subprocess overhead.
-- [ ] **Issue #3 (Data Contracts):** Refactor `query_database()` to return structured Pydantic models instead of string-delimited chunks.
+- [x] **Issue #3 (Data Contracts):** Refactor `query_database()` to return structured Pydantic models instead of string-delimited chunks.
 - [ ] **Issue #4 (Agentic Function Calling):** Replace manual JSON prompting in `action_node` with native Gemini Tool Calling.
 - [ ] **Issue #5 (Chat Interface Page):** Build the 3-column Next.js `/chat` page consuming `/api/ask/stream` with live Agent Trace visualization.
 - [ ] **Issue #6 (Evaluation Rigor):** Automate RAG evaluation metrics (Faithfulness, Groundedness, Context Precision) using an automated LLM judge.

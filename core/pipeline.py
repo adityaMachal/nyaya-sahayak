@@ -251,27 +251,18 @@ Original: {question}"""
 
     print(f"  🔬 Researcher → queries: {all_queries}")
 
-    # Step 2: Run all queries through RAG and collect unique chunks
-    all_chunks = []
-    seen_content = set()
+    # Step 2: Run all queries through RAG and collect unique chunks via clean Pydantic data contracts
+    all_chunks: list[dict] = []
+    seen_ids = set()
 
     for q in all_queries:
-        result_text = query_database(q, n_results=3)  # 3 per variant to avoid flooding
-        # Parse the formatted output back into chunks
-        if "No relevant legal information found" not in result_text:
-            # Split by separator and extract chunks
-            sections = result_text.split("-" * 50)
-            for section in sections:
-                section = section.strip()
-                if section and "RAG Results for:" not in section and "=" * 50 not in section:
-                    # De-duplicate by content hash
-                    content_hash = hash(section[:200])
-                    if content_hash not in seen_content:
-                        seen_content.add(content_hash)
-                        all_chunks.append({
-                            "content": section,
-                            "query": q
-                        })
+        chunks = query_database(q, n_results=3)  # 3 per variant to avoid flooding
+        for chunk in chunks:
+            if chunk.id not in seen_ids:
+                seen_ids.add(chunk.id)
+                chunk_dict = chunk.model_dump()
+                chunk_dict["query_origin"] = q
+                all_chunks.append(chunk_dict)
 
     print(f"  📚 Researcher → retrieved {len(all_chunks)} unique chunks")
 
@@ -407,10 +398,23 @@ def explainer_node(state: AgentState) -> dict:
     tool_name = state.get("tool_name_used", "")
     conversation_history = state.get("conversation_history", "")
 
-    # Format research findings
+    # Format research findings with statutory attribution
     research_text = "No research data available."
     if chunks:
-        research_text = "\n\n".join([c["content"] for c in chunks[:5]])
+        formatted_pieces = []
+        for c in chunks[:5]:
+            source = c.get("source", "Unknown") if isinstance(c, dict) else getattr(c, "source", "Unknown")
+            act_title = c.get("act_title") if isinstance(c, dict) else getattr(c, "act_title", None)
+            heading = c.get("section_heading") if isinstance(c, dict) else getattr(c, "section_heading", None)
+            text = c.get("text", c.get("content", "")) if isinstance(c, dict) else getattr(c, "text", "")
+
+            header = f"[{source}]"
+            if act_title:
+                header += f" {act_title}"
+            if heading:
+                header += f" - {heading}"
+            formatted_pieces.append(f"### {header}\n{text}")
+        research_text = "\n\n".join(formatted_pieces)
 
     # Format tool results
     tool_text = "No tool data available."

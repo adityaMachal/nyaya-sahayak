@@ -8,7 +8,7 @@ if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
 from fastmcp import FastMCP
-from rag.retrieval import query_database
+from rag.retrieval import query_database, format_chunks_for_display
 
 mcp = FastMCP("Nyaya Sahayak Legal Tools")
 
@@ -34,7 +34,8 @@ def search_legal_database(query: str) -> str:
     """
     if not query or not query.strip():
         return "Error: Please provide a non-empty search query."
-    return query_database(query)
+    chunks = query_database(query)
+    return format_chunks_for_display(chunks, query=query)
 
 
 # ──────────────────────────────────────────────
