@@ -1,6 +1,20 @@
+from pydantic import BaseModel, Field
 import chromadb
 from sentence_transformers import SentenceTransformer
 from rag import config
+
+# ── Data Contract ─────────────────────────────────────────────────
+class RetrievedChunk(BaseModel):
+    """Structured data contract for legal chunks retrieved from ChromaDB."""
+    id: str = Field(description="Unique chunk identifier in ChromaDB")
+    text: str = Field(description="Raw statutory text or section content")
+    source: str = Field(default="Unknown", description="Source file name or statutory document")
+    doc_type: str = Field(default="unknown", description="Type of document (e.g. act, constitution, ipc_bns_mapping)")
+    act_title: str | None = Field(default=None, description="Title of the statute or act")
+    section_heading: str | None = Field(default=None, description="Section heading or title")
+    distance: float | None = Field(default=None, description="Cosine distance from query vector")
+    metadata: dict = Field(default_factory=dict, description="All raw metadata attributes from ChromaDB")
+
 
 # ── Module-level singletons ───────────────────────────────────────
 # Loaded once on first import/call, reused across all subsequent
@@ -34,10 +48,13 @@ def _get_collection() -> chromadb.Collection:
     return _collection
 
 
-def query_database(query: str, n_results: int = config.TOP_K) -> str:
+def query_database(query: str, n_results: int = config.TOP_K) -> list[RetrievedChunk]:
     """
-    Queries the ChromaDB vector database and returns a formatted string of results.
+    Queries the ChromaDB vector database and returns a list of typed RetrievedChunk objects.
     """
+    if not query or not query.strip():
+        return []
+
     model = _get_model()
     collection = _get_collection()
 
@@ -50,23 +67,57 @@ def query_database(query: str, n_results: int = config.TOP_K) -> str:
         n_results=n_results
     )
     
-    # Format the results into a readable string
     if not results['documents'] or not results['documents'][0]:
+        return []
+
+    chunks: list[RetrievedChunk] = []
+    ids = results.get('ids', [[]])[0]
+    docs = results['documents'][0]
+    metas = results.get('metadatas', [[]])[0]
+    dists = results.get('distances', [[]])[0]
+
+    for i, doc in enumerate(docs):
+        chunk_id = ids[i] if i < len(ids) else f"chunk_{i}"
+        meta = metas[i] if i < len(metas) and metas[i] else {}
+        dist = dists[i] if i < len(dists) else None
+
+        chunks.append(RetrievedChunk(
+            id=chunk_id,
+            text=doc,
+            source=meta.get('source', 'Unknown'),
+            doc_type=meta.get('doc_type', 'unknown'),
+            act_title=meta.get('act_title') or meta.get('ipc_title'),
+            section_heading=meta.get('section_heading') or meta.get('bns_title'),
+            distance=dist,
+            metadata=meta,
+        ))
+
+    return chunks
+
+
+def format_chunks_for_display(chunks: list[RetrievedChunk], query: str = "") -> str:
+    """Format chunks into a readable string for text-based interfaces or MCP tools."""
+    if not chunks:
         return "No relevant legal information found in the database."
-        
-    formatted_results = f"🔍 RAG Results for: '{query}'\n"
-    formatted_results += "=" * 50 + "\n\n"
-    
-    for i, (doc, metadata) in enumerate(zip(results['documents'][0], results['metadatas'][0])):
-        source = metadata.get('source', 'Unknown')
-        formatted_results += f"[{i+1}] Source: {source}\n"
-        formatted_results += f"{doc}\n"
-        formatted_results += "-" * 50 + "\n"
-        
-    return formatted_results
+
+    header = f"🔍 RAG Results for: '{query}'\n" if query else "🔍 RAG Results:\n"
+    header += "=" * 50 + "\n\n"
+
+    blocks = []
+    for i, chunk in enumerate(chunks):
+        title = f"[{i+1}] Source: {chunk.source}"
+        if chunk.act_title:
+            title += f" | {chunk.act_title}"
+        if chunk.section_heading:
+            title += f" ({chunk.section_heading})"
+        blocks.append(f"{title}\n{chunk.text}")
+
+    return header + ("\n" + "-" * 50 + "\n").join(blocks) + "\n" + "-" * 50
 
 
 if __name__ == "__main__":
     # Test script if executed directly
     test_query = "What is the punishment for murder?"
-    print(query_database(test_query))
+    retrieved = query_database(test_query)
+    print(f"Retrieved {len(retrieved)} structured chunks.")
+    print(format_chunks_for_display(retrieved, test_query))

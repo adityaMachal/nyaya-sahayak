@@ -26,6 +26,7 @@ Architecture:
 import asyncio
 import json
 import os
+import re
 import sys
 import time
 from pathlib import Path
@@ -34,6 +35,7 @@ from typing import Annotated, Literal, TypedDict
 import operator
 from dotenv import load_dotenv
 from google import genai
+from google.genai import types
 from langgraph.graph import END, StateGraph
 
 from core.memory import ConversationMemory
@@ -45,7 +47,7 @@ PROJECT_ROOT = str(Path(__file__).parent.parent)
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-from rag.retrieval import query_database
+from rag.retrieval import query_database, format_chunks_for_display, RetrievedChunk
 from rag import config
 
 # ── Direct Tool Registry ──────────────────────────────────────────
@@ -108,6 +110,24 @@ TOOL_REGISTRY: dict[str, dict] = {
 }
 
 
+def _build_native_tools() -> list[types.Tool]:
+    """Convert TOOL_REGISTRY into native Gemini FunctionDeclaration tools."""
+    declarations = []
+    for name, info in TOOL_REGISTRY.items():
+        declarations.append(
+            types.FunctionDeclaration(
+                name=name,
+                description=info["description"],
+                parameters_json_schema={
+                    "type": "object",
+                    "properties": info["parameters"],
+                    "required": list(info["parameters"].keys()),
+                },
+            )
+        )
+    return [types.Tool(function_declarations=declarations)]
+
+
 
 # ── Gemini Client ──────────────────────────────────────────────────
 
@@ -128,28 +148,30 @@ MODEL = config.LLM_MODEL
 
 def gemini_generate(prompt: str, max_retries: int = 3) -> str:
     """Call Gemini with automatic retry on transient errors (503, 429, etc.)."""
-    import re
-    for attempt in range(1, max_retries + 1):
-        try:
-            response = client.models.generate_content(
-                model=MODEL,
-                contents=prompt,
-            )
-            return response.text.strip()
-        except Exception as e:
-            error_str = str(e)
-            is_retryable = any(code in error_str for code in ["503", "429", "UNAVAILABLE", "RESOURCE_EXHAUSTED"])
-            if is_retryable and attempt < max_retries:
-                # Check if server suggested a specific retry delay
-                delay_match = re.search(r'retry in ([\d\.]+)s', error_str, re.IGNORECASE)
-                if delay_match:
-                    wait = min(float(delay_match.group(1)) + 1.0, 60.0)
+    models_to_try = [MODEL, getattr(config, "FALLBACK_MODEL", "gemini-flash-latest")]
+    last_err = None
+    for model_name in models_to_try:
+        for attempt in range(1, max_retries + 1):
+            try:
+                response = client.models.generate_content(
+                    model=model_name,
+                    contents=prompt,
+                )
+                return response.text.strip()
+            except Exception as e:
+                last_err = e
+                error_str = str(e)
+                is_retryable = any(code in error_str for code in ["503", "429", "UNAVAILABLE", "RESOURCE_EXHAUSTED"])
+                if is_retryable and attempt < max_retries:
+                    delay_match = re.search(r'retry in ([\d\.]+)s', error_str, re.IGNORECASE)
+                    wait = min(float(delay_match.group(1)) + 1.0, 60.0) if delay_match else (2 ** attempt)
+                    print(f"  ⏳ Gemini API rate-limited/busy on {model_name} (attempt {attempt}/{max_retries}), retrying in {wait:.1f}s...")
+                    time.sleep(wait)
                 else:
-                    wait = 2 ** attempt  # 2s, 4s
-                print(f"  ⏳ Gemini API rate-limited/busy (attempt {attempt}/{max_retries}), retrying in {wait:.1f}s...")
-                time.sleep(wait)
-            else:
-                raise
+                    break
+    if last_err:
+        raise last_err
+    raise RuntimeError("gemini_generate failed with unknown error")
 
 
 # ── Agent State ────────────────────────────────────────────────────
@@ -251,27 +273,18 @@ Original: {question}"""
 
     print(f"  🔬 Researcher → queries: {all_queries}")
 
-    # Step 2: Run all queries through RAG and collect unique chunks
-    all_chunks = []
-    seen_content = set()
+    # Step 2: Run all queries through RAG and collect unique chunks via clean Pydantic data contracts
+    all_chunks: list[dict] = []
+    seen_ids = set()
 
     for q in all_queries:
-        result_text = query_database(q, n_results=3)  # 3 per variant to avoid flooding
-        # Parse the formatted output back into chunks
-        if "No relevant legal information found" not in result_text:
-            # Split by separator and extract chunks
-            sections = result_text.split("-" * 50)
-            for section in sections:
-                section = section.strip()
-                if section and "RAG Results for:" not in section and "=" * 50 not in section:
-                    # De-duplicate by content hash
-                    content_hash = hash(section[:200])
-                    if content_hash not in seen_content:
-                        seen_content.add(content_hash)
-                        all_chunks.append({
-                            "content": section,
-                            "query": q
-                        })
+        chunks = query_database(q, n_results=3)  # 3 per variant to avoid flooding
+        for chunk in chunks:
+            if chunk.id not in seen_ids:
+                seen_ids.add(chunk.id)
+                chunk_dict = chunk.model_dump()
+                chunk_dict["query_origin"] = q
+                all_chunks.append(chunk_dict)
 
     print(f"  📚 Researcher → retrieved {len(all_chunks)} unique chunks")
 
@@ -287,68 +300,63 @@ Original: {question}"""
 # ══════════════════════════════════════════════════════════════════
 
 def action_node(state: AgentState) -> dict:
-    """Select and execute the appropriate legal tool via direct function call.
+    """Select and execute the appropriate legal tool via native Gemini Function Calling.
 
-    Previously spawned a new Python subprocess via MCP stdio_client on every
-    invocation (~2-4s cold-start overhead).  Now calls tool functions directly
-    from the mcp_server module while keeping the same Gemini-driven tool
-    selection logic.  The MCP server still exists for external clients.
+    Uses Gemini's native tool-calling protocol instead of manual JSON prompt
+    instructions and regex stripping. If Gemini returns a function call, we
+    invoke the corresponding callable directly from TOOL_REGISTRY.
     """
 
     question = state["user_question"]
+    tools = _build_native_tools()
 
-    # Build tool descriptions for Gemini (same format as before)
-    tool_descriptions = []
-    for name, info in TOOL_REGISTRY.items():
-        params = json.dumps(info["parameters"], indent=2)
-        tool_descriptions.append(
-            f"Tool: {name}\n"
-            f"Description: {info['description']}\n"
-            f"Parameters: {params}"
-        )
+    # Call Gemini with native function declarations and rate-limit retry wrapper
+    response = None
+    models_to_try = [MODEL, getattr(config, "FALLBACK_MODEL", "gemini-flash-latest")]
+    for model_name in models_to_try:
+        for attempt in range(1, 4):
+            try:
+                response = client.models.generate_content(
+                    model=model_name,
+                    contents=f"User legal query: {question}\nSelect the single most appropriate tool to answer this query.",
+                    config=types.GenerateContentConfig(
+                        tools=tools,
+                        temperature=0.0,
+                        automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True),
+                    ),
+                )
+                break
+            except Exception as e:
+                error_str = str(e)
+                is_retryable = any(code in error_str for code in ["503", "429", "UNAVAILABLE", "RESOURCE_EXHAUSTED"])
+                if is_retryable and attempt < 3:
+                    delay_match = re.search(r'retry in ([\d\.]+)s', error_str, re.IGNORECASE)
+                    wait = min(float(delay_match.group(1)) + 1.0, 60.0) if delay_match else (2 ** attempt)
+                    print(f"  ⏳ Gemini API busy during tool selection on {model_name} (attempt {attempt}/3), retrying in {wait:.1f}s...")
+                    time.sleep(wait)
+                else:
+                    break
+        if response is not None:
+            break
 
-    tools_text = "\n---\n".join(tool_descriptions)
+    # Extract native function call from response
+    if response and response.function_calls:
+        fc = response.function_calls[0]
+        tool_name = fc.name
+        tool_args = dict(fc.args) if fc.args else {}
+    else:
+        # Fallback if no function call was emitted
+        tool_name = "search_legal_database"
+        tool_args = {"query": question}
 
-    # Ask Gemini which tool to call and with what arguments
-    tool_selection_prompt = f"""You are an AI that selects the right legal tool to answer a question.
-
-Available tools:
-{tools_text}
-
-User question: {question}
-
-Respond in this EXACT JSON format (no markdown, no code fences):
-{{"tool_name": "name_of_tool", "arguments": {{"param_name": "param_value"}}}}
-
-Pick the MOST relevant tool. If the question mentions a specific IPC/BNS section number, use "search_bns_section".
-If it asks about time limits or deadlines, use "check_limitation_period".
-If it describes a situation, use "find_relevant_acts".
-For general legal searches, use "search_legal_database"."""
-
-    decision_text = gemini_generate(tool_selection_prompt)
-    # Clean up any markdown code fences
-    decision_text = decision_text.replace("```json", "").replace("```", "").strip()
-
-    try:
-        decision = json.loads(decision_text)
-    except json.JSONDecodeError:
-        # Fallback: use search_legal_database with the question
-        decision = {
-            "tool_name": "search_legal_database",
-            "arguments": {"query": question}
-        }
-
-    tool_name = decision["tool_name"]
-    tool_args = decision.get("arguments", {})
-
-    # Validate tool name against registry
+    # Validate tool against registry
     if tool_name not in TOOL_REGISTRY:
         tool_name = "search_legal_database"
         tool_args = {"query": question}
 
-    print(f"  ⚡ Action → calling tool: {tool_name}({tool_args})")
+    print(f"  ⚡ Action (Native Tool) → calling: {tool_name}({tool_args})")
 
-    # Execute the tool directly (no subprocess!)
+    # Execute the tool directly
     tool_fn = TOOL_REGISTRY[tool_name]["fn"]
     tool_output = tool_fn(**tool_args)
 
@@ -407,10 +415,23 @@ def explainer_node(state: AgentState) -> dict:
     tool_name = state.get("tool_name_used", "")
     conversation_history = state.get("conversation_history", "")
 
-    # Format research findings
+    # Format research findings with statutory attribution
     research_text = "No research data available."
     if chunks:
-        research_text = "\n\n".join([c["content"] for c in chunks[:5]])
+        formatted_pieces = []
+        for c in chunks[:5]:
+            source = c.get("source", "Unknown") if isinstance(c, dict) else getattr(c, "source", "Unknown")
+            act_title = c.get("act_title") if isinstance(c, dict) else getattr(c, "act_title", None)
+            heading = c.get("section_heading") if isinstance(c, dict) else getattr(c, "section_heading", None)
+            text = c.get("text", c.get("content", "")) if isinstance(c, dict) else getattr(c, "text", "")
+
+            header = f"[{source}]"
+            if act_title:
+                header += f" {act_title}"
+            if heading:
+                header += f" - {heading}"
+            formatted_pieces.append(f"### {header}\n{text}")
+        research_text = "\n\n".join(formatted_pieces)
 
     # Format tool results
     tool_text = "No tool data available."

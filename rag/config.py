@@ -17,4 +17,5 @@ DEVICE = "cuda"  # Leverages RTX 3050 (fallback to cpu if unavailable)
 TOP_K = 5        # Number of chunks to retrieve per query
 
 # LLM
-LLM_MODEL = "gemini-3.8-flash"
+LLM_MODEL = os.getenv("LLM_MODEL", "gemini-3.5-flash")
+FALLBACK_MODEL = "gemini-flash-latest"
