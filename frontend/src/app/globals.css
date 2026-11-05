@@ -1,0 +1,98 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Noto+Serif+Devanagari:wght@600;700;800&family=Playfair+Display:ital,wght@0,700;0,800;1,700&display=swap');
+@import "tailwindcss";
+
+:root {
+  --bg-parchment: #F3EBDE;
+  --bg-paper-light: #FAF6F0;
+  --bg-paper-card: #EFE6D8;
+  --ink-dark: #1B1C1E;
+  --ink-body: #35332F;
+  --ink-muted: #524E48;
+  --crimson: #9E1B1B;
+  --crimson-bright: #C81919;
+  --line-border: #C9BFB0;
+  --line-subtle: #D8CEBF;
+}
+
+@theme {
+  --font-serif: 'Playfair Display', Georgia, serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  background-color: var(--bg-parchment);
+  color: var(--ink-dark);
+  font-family: 'Newsreader', Georgia, serif;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* Authentic Paper Grain Surface */
+.paper-surface {
+  background-color: var(--bg-parchment);
+  background-image:
+    radial-gradient(rgba(28, 25, 21, 0.035) 1px, transparent 0),
+    radial-gradient(rgba(158, 27, 27, 0.015) 1px, transparent 0);
+  background-size: 24px 24px;
+  background-position: 0 0, 12px 12px;
+}
+
+/* Typography Classes */
+.font-editorial-serif {
+  font-family: 'Playfair Display', Georgia, serif;
+}
+
+.font-devanagari {
+  font-family: 'Noto Serif Devanagari', serif;
+}
+
+.font-tech-mono {
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+.font-body-serif {
+  font-family: 'Newsreader', Georgia, serif;
+}
+
+/* Hairline Grid Crosshair (+) Markers */
+.crosshair-mark {
+  position: absolute;
+  width: 11px;
+  height: 11px;
+  pointer-events: none;
+  z-index: 25;
+}
+.crosshair-mark::before,
+.crosshair-mark::after {
+  content: "";
+  position: absolute;
+  background-color: #3B3732;
+}
+.crosshair-mark::before {
+  top: 5px;
+  left: 0;
+  width: 11px;
+  height: 1.2px;
+}
+.crosshair-mark::after {
+  top: 0;
+  left: 5px;
+  width: 1.2px;
+  height: 11px;
+}
+
+/* Technical Dossier Rubber Stamp Styling */
+.rubber-stamp {
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-width: 2px;
+  border-style: solid;
+  border-radius: 3px;
+  display: inline-block;
+  user-select: none;
+}

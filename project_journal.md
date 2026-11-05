@@ -302,6 +302,34 @@ A hybrid architecture combining **Retrieval-Augmented Generation (RAG)** over ve
 
 ---
 
+### Issue #5 Architecture: Technical Dossier Landing Page & 3-Column Consultation Workspace (/chat)
+- **Date:** 2026-11-04
+- **Target Files:** [`frontend/src/app/globals.css`](file:///home/adi/Documents/projects/nyaya-sahayak/frontend/src/app/globals.css), [`frontend/src/app/page.tsx`](file:///home/adi/Documents/projects/nyaya-sahayak/frontend/src/app/page.tsx), [`frontend/src/app/chat/page.tsx`](file:///home/adi/Documents/projects/nyaya-sahayak/frontend/src/app/chat/page.tsx), [`frontend/src/components/*`](file:///home/adi/Documents/projects/nyaya-sahayak/frontend/src/components)
+- **Problem Diagnosed:**
+  The frontend required an authoritative, high-density interface reflecting the serious nature of statutory Indian jurisprudence. Modern generic "SaaS chat bubbles" fail to convey the rigor, auditability, and deterministic precision required for legal intake. Additionally, users needed real-time visibility into the multi-agent StateGraph orchestration pipeline (Supervisor routing, FastMCP tool selection, and RAG retrieval) rather than opaque loading spinners.
+- **Solution:**
+  1. **Aesthetic & Typographic System:** Implemented the "Technical Dossier / Legal Brutalism" design language matching the approved specifications:
+     - Warm legal parchment background (`#F3EBDE`), ink black typography (`#1B1C1E`), hairline borders (`#C9BFB0`), and legal stamp red accents (`#9E1B1B`).
+     - Quad-font stack: *Playfair Display* (statutory headers), *Noto Serif Devanagari* (Hindi bilingual identity), *IBM Plex Mono* (telemetry & data contracts), and *Newsreader* (legal memorandum body).
+     - Precision drafting accents: register crosshairs (`+`), corner brackets (`⌜ ⌝ ⌞ ⌟`), registration marks (`⌖`), millimeter rules, and tilted distressed rubber stamps (`[APPROVED]`, `[STATEGRAPH: STREAMING]`).
+  2. **Long-Format Technical Landing Page (`/`):**
+     - **Navbar & FIG 01 Hero:** Real-time backend engine connectivity monitor (`🟢 ENGINE ONLINE` / `🟡 DEMO SIMULATION`), bilingual branding, and cropped archival artwork plate.
+     - **FIG 02 Benchmark Telemetry:** 4 metric cards highlighting verified system performance (1,128.2× retrieval speedup with custom SVG oscilloscope sparkline, <1ms FastMCP tool execution, 358+ BNS cross-referenced sections, 100% Pydantic attribution).
+     - **FIG 03 LangGraph Pipeline:** Interactive SVG architecture flowchart depicting the Supervisor, Researcher, Action, and Explainer nodes with hover inspectable state schemas.
+     - **FIG 04 Statutory Modules:** 2×2 dossier grid covering IPC-to-BNS statutory conversion, Limitation Act procedural timelines, grounded ChromaDB RAG, and SQLite multi-turn session persistence.
+     - **FIG 05 Case Logs & Colophon:** Interactive 3-tab legal case logs with direct "Try this case in live Chat ➔" query handoff, Advocates Act 1961 statutory disclaimer, and system colophon.
+  3. **3-Column Legal Consultation Workspace (`/chat`):**
+     - Perfectly mirrors the `/home/adi/Downloads/Chatbot.png` design specification:
+     - **Left Column (SQLite Dossier Archive):** Real-time integration with `GET /api/sessions`, dynamic case cards (`#104 Cheque Bounce`, `#103 IPC 302`, `#102 Tenancy`, `#101 Land Title`, `#100 Contract Breaches`), and `[+ NEW LEGAL CONSULTATION]` action.
+     - **Center Column (Citizen Intake Terminal):** Natural language citizen query box, structured Legal Memorandum with statutory metadata badges (`STATUTE REFERENCE: ni_act_1881.md S.138`), highlighted red statutory limitation callout (`❴ STATUTORY LIMITATION: ...`), and interactive 3-step procedural checklist with clickable checkboxes (`☑`/`☐`).
+     - **Right Column (FIG 06 Live Agent Trace):** Real-time multi-agent StateGraph visualization (`User Query Input` ➔ `Step 01: SUPERVISOR ROUTER` ➔ `Step 02: ACTION AGENT FastMCP` ➔ `Step 03: EXPLAINER AGENT` ➔ `Finalized Memo`), connected to Server-Sent Events (`POST /api/ask/stream`) with graceful fallback simulation.
+- **Measured Result:**
+  - Next.js 16 Turbopack production build compiles with zero errors in ~560ms.
+  - Zero external heavyweight canvas or flowchart dependencies; all diagrams rendered with pure semantic SVG and CSS.
+  - Full end-to-end parameter passing from Landing Page case logs (`/chat?q=...`) to live consultation workspace.
+
+---
+
 ## 4. Benchmark & Profiling History
 
 | Date | Component | Metric / Test | Before | After | Delta / Speedup |
@@ -313,6 +341,7 @@ A hybrid architecture combining **Retrieval-Augmented Generation (RAG)** over ve
 | **2026-10-17** | LLM Engine | Foundation model & resilience | gemini-2.5-flash | **gemini-3.8-flash** | Deprecation fixed + 429 backoff resilience |
 | **2026-10-19** | RAG Data Pipeline | Inter-node chunk serialization | ASCII `split('-'*50)` | **Pydantic `RetrievedChunk`** | Clean typing + zero parsing fragility |
 | **2026-10-20** | Agent Tool Calling | Tool selection protocol | Manual JSON prompt + regex | **Native Gemini Function Calling** | 100% schema compliance, 0 parsing failures |
+| **2026-11-04** | Frontend Architecture | Next.js 16 Technical Dossier & Chat | None (CLI/Swagger only) | **Full Landing Page + 3-Col Workspace** | Complete visual design & SSE streaming |
 
 ---
 
@@ -325,6 +354,11 @@ A hybrid architecture combining **Retrieval-Augmented Generation (RAG)** over ve
 - [x] **Issue #2 (MCP Architecture):** Direct in-memory tool execution registry eliminating subprocess overhead.
 - [x] **Issue #3 (Data Contracts):** Refactor `query_database()` to return structured Pydantic models instead of string-delimited chunks.
 - [x] **Issue #4 (Agentic Function Calling):** Replace manual JSON prompting in `action_node` with native Gemini Tool Calling.
-- [ ] **Issue #5 (Chat Interface Page):** Build the 3-column Next.js `/chat` page consuming `/api/ask/stream` with live Agent Trace visualization.
+- [x] **Issue #5 (Frontend Architecture & Workspace):** Build the Technical Dossier Landing Page (`/`) and 3-column Legal Consultation Workspace (`/chat`) matching `fullpage.png` and `Chatbot.png`.
 - [ ] **Issue #6 (Evaluation Rigor):** Automate RAG evaluation metrics (Faithfulness, Groundedness, Context Precision) using an automated LLM judge.
+- [ ] **Issue #7 (Flagged — Pipeline Latency Optimization):** Eliminate cloud LLM waterfall (collapse 4 sequential Gemini calls to 1-2 calls, implement <1ms heuristic fast-path router, and pre-warm PyTorch embedding model in FastAPI lifespan to cut end-to-end latency from ~40s down to ~3-4s).
+- [ ] **Issue #8 (Zero-Cost Production Deployment — Option 1):** Deploy full-stack Nyaya Sahayak at $0 cost forever:
+  - **Backend (Hugging Face Spaces):** Docker container with 2 vCPUs + 16GB free RAM running FastAPI (`uvicorn api.server:app --port 7860`), pre-baked ChromaDB statutory vector store, and SQLite WAL memory.
+  - **Frontend (Vercel):** Next.js 16 Edge deployment from `frontend` branch with `NEXT_PUBLIC_API_URL` pointing to the Hugging Face Space.
+  - **CORS & Keep-Alive:** Configure unbuffered SSE streaming and CORS headers for secure browser-to-backend real-time communication.
 
