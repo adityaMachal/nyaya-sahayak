@@ -116,6 +116,7 @@ All benchmarks measured on Linux (Kernel 6.8, Ubuntu 24.04 LTS), AMD Ryzen 7 743
 | **Tool Parameter Parsing** | Regex string parsing | **Native Function Calling** | **0% schema errors** |
 | **Inter-Agent Serialization** | Delimited ASCII string | **Pydantic Model Contract** | **100% type-safe** |
 | **Frontend Production Build** | Standard Webpack (~8.4s) | **Next.js 16 Turbopack (562 ms)** | **14.9x faster** |
+| **Automated Evaluation Suite** | Manual review (~2-3 hrs) | **RAG Triad LLM Judge (15/15 PASS)** | **100% automated CI guard** |
 
 ---
 
@@ -135,9 +136,12 @@ nyaya-sahayak/
 |   |-- chroma_db/             # Local ChromaDB persistent vector index
 |   `-- conversations.db       # SQLite chat session database
 |-- evaluation/
-|   |-- evaluate.py            # Benchmark execution script
-|   |-- test_queries.json      # 10 clinical legal evaluation scenarios
-|   `-- results.md             # Benchmark scoring and failure case logs
+|   |-- evaluate.py            # Benchmark execution script with checkpoint auto-resume
+|   |-- rag_triad_judge.py     # Single-pass LLM Judge & deterministic context precision
+|   |-- schemas.py             # Pydantic evaluation schemas (claims, audits, scores)
+|   |-- test_queries.json      # 15 statutory and adversarial legal evaluation scenarios
+|   |-- evaluation_run_results.json # Raw judicial claim decomposition & scoring dataset
+|   `-- results.md             # Formal benchmark audit report and scorecard
 |-- frontend/
 |   |-- src/
 |   |   |-- app/
@@ -229,15 +233,70 @@ Open `http://localhost:3000` for the landing page or `http://localhost:3000/chat
 
 ---
 
-## Automated Evaluation Suite
+## Automated Evaluation Suite (RAG Triad & LLM-as-a-Judge)
 
-The evaluation harness benchmarks retrieval precision, statutory citations, and response relevance across diverse legal domains:
+Nyaya Sahayak incorporates an automated, scientifically rigorous judicial evaluation suite located in `evaluation/`. Rather than relying on subjective human spot-checking, every turn is audited by an automated LLM Judge using the **RAG Triad** framework with deterministic metadata verification.
+
+### Evaluation Methodology & Metrics
+
+1. **Faithfulness (Zero-Hallucination via Atomic Claim Decomposition):**
+   - The evaluator deconstructs each synthesized legal memorandum into atomic, isolated factual propositions (e.g., section numbers, limitation periods, penalty durations).
+   - Each claim is cross-checked against the retrieved statutory chunks.
+   - A claim is verified (`is_supported = True`) **only if an exact verbatim quote** exists in the retrieved context. Any unsubstantiated statutory assertion is flagged as a hallucination.
+   - Metric formula: $\text{Faithfulness} = \frac{\text{Supported Claims}}{\text{Total Claims}}$. Target: $\ge 95.0\%$.
+
+2. **Answer Relevance (Query Directness & Completeness):**
+   - Evaluates whether the generated memorandum directly and comprehensively addresses the citizen's inquiry without evasiveness, conversational filler, or irrelevant legal digressions.
+   - Harmonic combination of directness and statutory completeness. Target: $\ge 90.0\%$.
+
+3. **Context Precision (Deterministic Rank Utility):**
+   - Measures whether the ChromaDB retrieval engine surfaced the required statutory acts and sections in the top ranks.
+   - Evaluated **deterministically in Python** (`< 1ms` latency, 0 API calls) against verified ground-truth metadata in `test_queries.json`, utilizing Mean Reciprocal Rank (MRR) and Precision@K. Target: $\ge 85.0\%$.
+
+4. **Composite Score:**
+   - Weighted combination prioritizing factual accuracy:
+     $$\text{Composite Score} = (0.45 \times \text{Faithfulness}) + (0.35 \times \text{Relevance}) + (0.20 \times \text{Context Precision})$$
+   - Verdict criteria: **PASS** if $\text{Composite} \ge 85.0\%$ and $\text{Faithfulness} \ge 90.0\%$; otherwise **NEEDS_REVIEW** ($\ge 70.0\%$) or **FAIL** ($< 70.0\%$).
+
+---
+
+### Verified Benchmark Scorecard (15/15 Scenarios)
+
+The evaluation suite was executed across a 15-scenario statutory corpus covering criminal procedure, tenancy disputes, cheque bounce notices, constitutional remedies, and adversarial negative controls:
+
+| Evaluation Metric | Measured Score | Benchmark Target | Status |
+|:---|:---:|:---:|:---:|
+| **Faithfulness (Zero-Hallucination)** | **100.0%** | >= 95.0% | MET |
+| **Answer Relevance** | **97.4%** | >= 90.0% | MET |
+| **Context Precision (Rank Utility)** | **96.2%** | >= 85.0% | MET |
+| **Composite Score** | **98.3%** | >= 85.0% | MET |
+| **Benchmark Pass Rate** | **15 / 15 (100.0%)** | 100.0% | PASS |
+
+### Adversarial Robustness Check
+- **Negative Control (Query #15):** Tested against a fabricated section (*Section 999 of Bharatiya Nyaya Sanhita, 2023*).
+- **Result:** The system correctly identified that Section 999 does not exist in the BNS (the BNS terminates at Section 358), achieving 100% faithfulness and zero hallucinations.
+
+---
+
+### Running the Evaluation Harness
+
+The evaluation runner includes real-time incremental auto-saving, checkpoint auto-resume, and rate-limit pacing:
 
 ```bash
+# Run the full 15-scenario evaluation suite (resumes from checkpoint automatically)
 uv run python evaluation/evaluate.py
+
+# Evaluate a specific subset of query IDs
+uv run python evaluation/evaluate.py --ids 6,12,14
+
+# Run with custom inter-query pacing delay (seconds)
+uv run python evaluation/evaluate.py --delay 5.0
+
+# Force full re-evaluation from scratch (bypasses cache)
+uv run python evaluation/evaluate.py --no-resume
 ```
 
-Results are serialized to `evaluation/evaluation_run_results.json` and summarized in `evaluation/results.md`.
+Detailed per-scenario audits and atomic claim quotes are saved to `evaluation/results.md`, and raw JSON data is serialized to `evaluation/evaluation_run_results.json`.
 
 ---
 
