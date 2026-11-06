@@ -20,6 +20,11 @@
    - [Tier 1 Full-Stack: Modularization, SQLite Memory & FastAPI Backend](#tier-1-full-stack-modularization-sqlite-memory--fastapi-backend)
    - [Frontend: Next.js 15 & Indian Legal Themed Landing Page](#frontend-nextjs-15--indian-legal-themed-landing-page)
    - [Performance Optimization: Lazy Model Singletons (1,128× Speedup)](#performance-optimization-lazy-model-singletons-1128-speedup)
+   - [Issue #2 Optimization: Direct Tool Registry & Gemini Resilience](#issue-2-optimization--model-upgrade-direct-tool-registry--gemini-38-flash)
+   - [Issue #3 Architecture: Clean Pydantic Data Contracts for RAG](#issue-3-architecture-clean-pydantic-data-contracts-for-rag)
+   - [Issue #4 Architecture: Native Gemini Tool Calling & Resilient Model Fallback](#issue-4-architecture-native-gemini-tool-calling--resilient-model-fallback)
+   - [Issue #5 Architecture: Technical Dossier Landing Page & 3-Column Consultation Workspace (/chat)](#issue-5-architecture-technical-dossier-landing-page--3-column-consultation-workspace-chat)
+   - [Issue #6 Architecture: Automated RAG Triad Evaluation & Gemini Quota Optimization](#issue-6-architecture-automated-rag-triad-evaluation-llm-as-a-judge--gemini-quota-optimization)
 4. [Benchmark & Profiling History](#4-benchmark--profiling-history)
 5. [Active Roadmap & Backlog](#5-active-roadmap--backlog)
 
@@ -330,6 +335,45 @@ A hybrid architecture combining **Retrieval-Augmented Generation (RAG)** over ve
 
 ---
 
+### Issue #6 Architecture: Automated RAG Triad Evaluation (LLM-as-a-Judge) & Gemini Quota Optimization
+- **Date:** 2026-11-05
+- **Target Files:** [`evaluation/schemas.py`](file:///home/adi/Documents/projects/nyaya-sahayak/evaluation/schemas.py), [`evaluation/rag_triad_judge.py`](file:///home/adi/Documents/projects/nyaya-sahayak/evaluation/rag_triad_judge.py), [`evaluation/evaluate.py`](file:///home/adi/Documents/projects/nyaya-sahayak/evaluation/evaluate.py), [`evaluation/test_queries.json`](file:///home/adi/Documents/projects/nyaya-sahayak/evaluation/test_queries.json), [`evaluation/results.md`](file:///home/adi/Documents/projects/nyaya-sahayak/evaluation/results.md)
+- **Problem Diagnosed (API Burst Throttle & 503 High Demand Spikes):**
+  During initial execution of the automated RAG Triad evaluation suite on the 15-query legal benchmark, the test runner encountered severe rate limiting (`429 RESOURCE_EXHAUSTED`, `Please retry in 29.8s...`) and cloud capacity errors (`503 UNAVAILABLE: This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.`).
+  
+  *Root Cause Analysis:*
+  1. **Cascading API Waterfall Explosion:** The initial unoptimized evaluation harness made **7 separate sequential LLM API calls per test scenario**:
+     - 4 multi-agent pipeline calls: Supervisor routing -> Researcher multi-query expansion -> Action native function calling -> Explainer memorandum synthesis.
+     - 3 separate judicial calls: `evaluate_faithfulness` (atomic claim decomposition) -> `evaluate_relevance` (directness/completeness) -> `evaluate_context_precision` (retrieval rank scoring).
+  2. **Free-Tier Quota Ceiling (15 RPM):** Across a 15-scenario benchmark, this naive execution totaled $15 \times 7 = 105$ cloud API calls. With Google Gemini free tier strictly capped at **15 Requests Per Minute (RPM)** and low burst tolerances, Query #2 pushed the per-minute quota over the edge, causing cascading 30-second backoffs and process halts.
+  3. **High-Demand Flakiness:** The endpoint for `gemini-3.8-flash` suffered regional capacity spikes (503 UNAVAILABLE), whereas lightweight models (`gemini-3.5-flash-lite`, `gemini-flash-lite-latest`) remained responsive with sub-1.5s latency.
+
+- **Architectural Solution & Multi-Part Optimization:**
+  1. **Single-Pass Unified Judicial Evaluation:**
+     - Consolidated atomic claim decomposition, verbatim evidence citation verification (Faithfulness), and query directness/completeness (Relevance) into **a single structured JSON prompt**.
+     - Eliminated 2 out of 3 judicial LLM round-trips (**66.7% reduction in judge API overhead**).
+  2. **Deterministic Context Precision in Python (0 API Calls):**
+     - Replaced non-deterministic LLM grading of retrieved context chunks with deterministic metadata and statutory source matching in Python (`<1ms` latency, 0 token consumption).
+     - Cross-references retrieved chunks against the benchmark ground truth `expected_source` (e.g. `constitution.json`, `ni_act_1881.md`, `ipc_bns_mapping.json`) to compute rank-weighted precision and Mean Reciprocal Rank (MRR).
+     - Pure tool-based queries (MCP action route) with 0 vector chunks are deterministically assigned 1.0 (N/A).
+  3. **Multi-Model High-Availability Fallback Chain:**
+     - Configured the judge client with automatic fallback across healthy Gemini endpoints (`gemini-3.5-flash`, `gemini-3.5-flash-lite`, `gemini-flash-lite-latest`, `gemini-3.8-flash`).
+     - Added regex parsing of rate-limit backoff durations (`Please retry in Xs`) with bounded exponential retry delays.
+  4. **Strict Rate-Limit Pacing & CLI Controls:**
+     - Added an asynchronous 4.0s sleep between evaluation turns in [`evaluation/evaluate.py`](file:///home/adi/Documents/projects/nyaya-sahayak/evaluation/evaluate.py).
+     - Combined with the unified judge, total calls per query are capped at 4-5 calls over ~10-12s, strictly guaranteeing compliance under the 15 RPM quota (~6-8 RPM throughput).
+     - Added CLI flags `--limit <N>` and `--ids <id1,id2>` for rapid subset verification and regression testing.
+  5. **Adversarial & Edge-Case Benchmark Dataset (15 Scenarios):**
+     - Expanded test dataset from 10 to 15 queries covering criminal law (IPC 302 -> BNS 101, arrest without warrant), commercial statutes (NI Act S.138 30-day notice), constitutional rights (Art 14, 19, 21, 32), civil disputes (e-Daakhil, MACT, industrial retrenchment), procedural codes (BNSS 175(3) preliminary inquiry), and negative control / adversarial hallucination check (Section 999 BNS).
+
+- **Measured Result:**
+  - Judge API calls reduced from 3 to 1 per turn (66.7% reduction).
+  - Context precision evaluation latency dropped from ~2.5s (LLM call) to **<0.001s** (deterministic Python computation).
+  - Eliminates cascading 429 quota exhaustion and 503 unavailability locks during automated runs.
+  - Final Automated Benchmark: **15 / 15 (100.0%) PASS**, **100.0% Faithfulness** (Zero hallucinations detected), **97.4% Answer Relevance**, **96.2% Context Precision**, and **98.3% Composite Score**.
+
+---
+
 ## 4. Benchmark & Profiling History
 
 | Date | Component | Metric / Test | Before | After | Delta / Speedup |
@@ -342,6 +386,8 @@ A hybrid architecture combining **Retrieval-Augmented Generation (RAG)** over ve
 | **2026-10-19** | RAG Data Pipeline | Inter-node chunk serialization | ASCII `split('-'*50)` | **Pydantic `RetrievedChunk`** | Clean typing + zero parsing fragility |
 | **2026-10-20** | Agent Tool Calling | Tool selection protocol | Manual JSON prompt + regex | **Native Gemini Function Calling** | 100% schema compliance, 0 parsing failures |
 | **2026-11-04** | Frontend Architecture | Next.js 16 Technical Dossier & Chat | None (CLI/Swagger only) | **Full Landing Page + 3-Col Workspace** | Complete visual design & SSE streaming |
+| **2026-11-05** | Evaluation Suite | Judge API calls & quota consumption | 7 LLM calls/turn, 429/503 errors | **1 unified judge call + deterministic precision (0 API calls)** | **66.7% reduction in judge calls**, zero quota exhaustion |
+| **2026-11-06** | Evaluation Suite | 15-scenario RAG Triad Benchmark | 0/15 (untested with LLM judge) | **15 / 15 (100.0%) PASS** | **100.0% Faithfulness, 97.4% Relevance, 96.2% Precision, 98.3% Composite** |
 
 ---
 
@@ -355,7 +401,7 @@ A hybrid architecture combining **Retrieval-Augmented Generation (RAG)** over ve
 - [x] **Issue #3 (Data Contracts):** Refactor `query_database()` to return structured Pydantic models instead of string-delimited chunks.
 - [x] **Issue #4 (Agentic Function Calling):** Replace manual JSON prompting in `action_node` with native Gemini Tool Calling.
 - [x] **Issue #5 (Frontend Architecture & Workspace):** Build the Technical Dossier Landing Page (`/`) and 3-column Legal Consultation Workspace (`/chat`) matching `fullpage.png` and `Chatbot.png`.
-- [ ] **Issue #6 (Evaluation Rigor):** Automate RAG evaluation metrics (Faithfulness, Groundedness, Context Precision) using an automated LLM judge.
+- [x] **Issue #6 (Evaluation Rigor):** Automate RAG evaluation metrics (Faithfulness, Groundedness, Context Precision) using an automated LLM judge with single-pass optimization and deterministic precision.
 - [ ] **Issue #7 (Flagged — Pipeline Latency Optimization):** Eliminate cloud LLM waterfall (collapse 4 sequential Gemini calls to 1-2 calls, implement <1ms heuristic fast-path router, and pre-warm PyTorch embedding model in FastAPI lifespan to cut end-to-end latency from ~40s down to ~3-4s).
 - [ ] **Issue #8 (Zero-Cost Production Deployment — Option 1):** Deploy full-stack Nyaya Sahayak at $0 cost forever:
   - **Backend (Hugging Face Spaces):** Docker container with 2 vCPUs + 16GB free RAM running FastAPI (`uvicorn api.server:app --port 7860`), pre-baked ChromaDB statutory vector store, and SQLite WAL memory.

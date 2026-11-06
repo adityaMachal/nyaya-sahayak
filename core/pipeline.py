@@ -148,7 +148,11 @@ MODEL = config.LLM_MODEL
 
 def gemini_generate(prompt: str, max_retries: int = 3) -> str:
     """Call Gemini with automatic retry on transient errors (503, 429, etc.)."""
-    models_to_try = [MODEL, getattr(config, "FALLBACK_MODEL", "gemini-flash-latest")]
+    raw_models = [MODEL, getattr(config, "FALLBACK_MODEL", "gemini-3.5-flash-lite"), "gemini-flash-lite-latest", "gemini-flash-latest"]
+    models_to_try = []
+    for m in raw_models:
+        if m and m not in models_to_try:
+            models_to_try.append(m)
     last_err = None
     for model_name in models_to_try:
         for attempt in range(1, max_retries + 1):
@@ -312,7 +316,11 @@ def action_node(state: AgentState) -> dict:
 
     # Call Gemini with native function declarations and rate-limit retry wrapper
     response = None
-    models_to_try = [MODEL, getattr(config, "FALLBACK_MODEL", "gemini-flash-latest")]
+    raw_models = [MODEL, getattr(config, "FALLBACK_MODEL", "gemini-3.5-flash-lite"), "gemini-flash-lite-latest", "gemini-flash-latest"]
+    models_to_try = []
+    for m in raw_models:
+        if m and m not in models_to_try:
+            models_to_try.append(m)
     for model_name in models_to_try:
         for attempt in range(1, 4):
             try:

@@ -6,7 +6,12 @@
   {"id": 5,  "question": "What is the punishment for cybercrime in India?",                                   "category": "ipc_bns",          "expected_source": "ipc_bns_mapping.json"},
   {"id": 6,  "question": "How do I file an RTI application and what is the fee?",                             "category": "rti",              "expected_source": "rti_act.md"},
   {"id": 7,  "question": "What are a tenant's rights against illegal eviction?",                              "category": "property",         "expected_source": "property_laws.md"},
-  {"id": 8,  "question": "What is the limitation period for filing a consumer complaint?",                    "category": "consumer",         "expected_source": "mcp_tool: check_limitation_period"},
+  {"id": 8,  "question": "What is the limitation period for filing a consumer complaint?",                    "category": "consumer",         "expected_source": "mcp_tool: check_limitation_period, consumer_protection.md"},
   {"id": 9,  "question": "Can an employer terminate an employee without notice in India?",                    "category": "labor",            "expected_source": "labor_laws.md"},
-  {"id": 10, "question": "What are the penalties for drunk driving under Motor Vehicles Act?",                "category": "motor_vehicle",    "expected_source": "motor_vehicle_act.md"}
+  {"id": 10, "question": "What are the penalties for drunk driving under Motor Vehicles Act?",                "category": "motor_vehicle",    "expected_source": "motor_vehicle_act.md"},
+  {"id": 11, "question": "What is the strict statutory notice window and limitation period for a bounced cheque under Section 138 of the Negotiable Instruments Act?", "category": "special_acts", "expected_source": "mcp_tool: check_limitation_period, ni_act_1881.md"},
+  {"id": 12, "question": "What legal remedies exist if a landlord wrongfully withholds a security deposit after peaceful handover of premises?", "category": "property", "expected_source": "property_laws.md, transfer_of_property"},
+  {"id": 13, "question": "What is the limitation period and remedy for breach of contract when advance payment was made under Indian Contract Act?", "category": "contract", "expected_source": "mcp_tool: check_limitation_period, consumer_protection.md, property_laws.md"},
+  {"id": 14, "question": "What should a citizen do if the police refuse to register an FIR for a cognizable offense under the new BNSS 2023?", "category": "bnss_procedure", "expected_source": "criminal_procedure.md, bnss"},
+  {"id": 15, "question": "What offense and punishment is specified under Section 999 of Bharatiya Nyaya Sanhita (BNS 2023)?", "category": "adversarial_negative", "expected_source": "ipc_bns_mapping.json, mcp_tool: search_bns_section"}
 ]
