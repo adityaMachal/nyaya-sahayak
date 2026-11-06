@@ -371,12 +371,41 @@ function ChatWorkspace() {
                   statusText: `Combined DAG: ${data.tool} + ${data.chunks} statutory chunks`,
                 }));
               }
-            } else if (data.type === "answer") {
-              assistantMessageBuffer = data.content || "";
+            } else if (data.type === "answer_chunk") {
+              assistantMessageBuffer += (data.content || "");
               setTrace((prev) => ({
                 ...prev,
                 currentStep: 3,
-                statusText: "Explainer agent synthesizing legal memorandum...",
+                statusText: "Explainer agent streaming legal memorandum...",
+              }));
+
+              // Update the assistant message in chat in real time
+              setMessages((prev) => {
+                const existing = [...prev];
+                const last = existing[existing.length - 1];
+                if (last && last.role === "assistant") {
+                  last.content = assistantMessageBuffer;
+                  return [...existing];
+                } else {
+                  return [
+                    ...existing,
+                    {
+                      role: "assistant",
+                      content: assistantMessageBuffer,
+                      timestamp: new Date().toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      }),
+                    },
+                  ];
+                }
+              });
+            } else if (data.type === "answer") {
+              assistantMessageBuffer = data.content || assistantMessageBuffer;
+              setTrace((prev) => ({
+                ...prev,
+                currentStep: 3,
+                statusText: "Explainer agent completed synthesis.",
               }));
 
               // Update the assistant message in chat

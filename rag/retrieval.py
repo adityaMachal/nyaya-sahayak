@@ -48,6 +48,18 @@ def _get_collection() -> chromadb.Collection:
     return _collection
 
 
+def prewarm_retrieval_engine():
+    """Pre-warms SentenceTransformer weights onto CUDA and connects ChromaDB during server startup."""
+    model = _get_model()
+    collection = _get_collection()
+    try:
+        # Run 1 dummy encoding so PyTorch CUDA context is fully initialized
+        model.encode("Nyaya Sahayak statutory prewarm", convert_to_numpy=True)
+    except Exception:
+        pass
+    return model, collection
+
+
 def query_database(query: str, n_results: int = config.TOP_K) -> list[RetrievedChunk]:
     """
     Queries the ChromaDB vector database and returns a list of typed RetrievedChunk objects.

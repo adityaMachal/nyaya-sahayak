@@ -1,6 +1,6 @@
 {
   "summary": {
-    "timestamp": "2026-11-06 08:20:32",
+    "timestamp": "2026-11-06 10:02:41",
     "total_queries": 15,
     "passed_queries": 15,
     "failed_queries": 0,
@@ -18,37 +18,73 @@
       "expected_source": "constitution.json",
       "route_taken": "research",
       "tool_used": "",
-      "chunks_retrieved": 3,
-      "answer": "Namaste! As your Nyaya Sahayak, I'm here to explain the fundamental rights guaranteed by the Indian Constitution in a simple way. These are very important rights that every citizen of India holds, ensuring their freedom and dignity.\n\n### 📋 Answer\n\nThe Indian Constitution guarantees certain basic rights to all its citizens, which are called Fundamental Rights. These rights are so crucial that no law can be made to take them away or reduce them. If any existing law goes against these fundamental rights, it becomes void to that extent.\n\nSome of the key fundamental rights include:\n\n*   **Right to Freedom of Speech and Expression:** This means you have the right to express your thoughts, opinions, and beliefs freely. This also includes the freedom of the press. (Derived from **Article 19(1)(a)**)\n*   **Right to Information:** Building on the freedom of speech, every citizen has the right to access information held by public authorities. (**Section 3** of the **Right to Information Act, 2005**, which is rooted in **Article 19(1)(a)**)\n*   **Right to Assemble Peaceably:** You have the right to gather peacefully and without weapons. (**Article 19(1)(b)**)\n*   **Right to Form Associations or Unions:** You can form groups, clubs, or unions with others. (**Article 19(1)(c)**)\n*   **Right to Move Freely:** You are free to travel anywhere within the territory of India. (**Article 19(1)(d)**)\n*   **Right to Reside and Settle:** You have the right to live and settle in any part of India. (**Article 19(1)(e)**)\n*   **Right to Practise any Profession, Occupation, Trade, or Business:** You are free to choose and carry out any lawful profession, occupation, trade, or business. (**Article 19(1)(g)**)\n\n### 📌 Key Sections\n\n*   **Article 13** of the Constitution states that any law inconsistent with or taking away fundamental rights shall be void.\n*   **Article 19** of the Constitution details several important freedoms, including freedom of speech and expression, assembly, association, movement, residence, and profession.\n*   **Section 3** of the **Right to Information Act, 2005**, explicitly grants the right to information to all citizens, derived from **Article 19(1)(a)**.\n\n### 🪜 Steps You Can Take\n\n1.  **Educate Yourself:** Understand your fundamental rights. Knowing them is the first step to protecting them.\n2.  **Exercise Your Rights Responsibly:** Use your freedoms in a way that respects the rights of others and the law.\n3.  **Seek Information:** If you need information from a government body, you can file an application under the Right to Information Act, 2005.\n4.  **Report Violations:** If you believe your fundamental rights are being violated, document the details and gather any evidence you can.\n\n### ⚖️ When to Consult a Lawyer\n\nYou should consult a qualified lawyer immediately if:\n\n*   You feel your fundamental rights have been violated by a government authority, private individual, or organization.\n*   You are facing legal action that you believe infringes upon your rights.\n*   You need help understanding how to exercise a specific fundamental right, especially if it involves complex legal procedures.\n*   You need to file a petition in court (like a writ petition in the High Court or Supreme Court) to enforce your fundamental rights.\n\n---\n⚠️ **DISCLAIMER:** This is informational guidance only, not professional legal advice. Always consult a qualified advocate before taking legal action.",
-      "error": null,
-      "latency_pipeline": 24.56,
-      "latency_judge": 3.32,
+      "chunks_retrieved": 5,
+      "answer": "📋 Answer\n\nHello! I am Nyaya Sahayak, your friendly legal guide. Fundamental rights are the basic human rights guaranteed to all citizens by the Indian Constitution. They ensure that every individual can live with dignity, equality, and freedom. Importantly, our Constitution protects these rights by stating that any law made in the past that goes against these fundamental rights is considered void.\n\n📌 Key Sections\n\nBased on the Indian Constitution, here are some of the key rights and protections:\n*   **Right to Equality (Article 14):** Guarantees that the State cannot deny anyone equality before the law or equal protection of the laws anywhere in India.\n*   **Freedoms (Article 19):** Grants all citizens the freedom of speech and expression, the right to assemble peacefully without arms, form associations or unions, move and reside freely anywhere in the country, and practice any profession, trade, or business.\n*   **Protection of Rights (Article 13):** Ensures that any existing laws that clash with or violate your fundamental rights are rendered void. \n*   *(Note: The Constitution also outlines civic responsibilities, such as respecting the National Flag and Anthem under Article 51A, and directs the State to work toward a Uniform Civil Code under Article 44).*\n\n🪜 Steps You Can Take\n\nIf you feel your fundamental rights are being compromised or violated, here is what you can do:\n*   **Understand Your Rights:** Read through the specific articles of the Constitution to understand the exact scope and limits of your freedoms.\n*   **Keep a Record:** If you experience any violation, document dates, times, and details of the incident.\n*   **Raise Awareness:** Discuss civic issues peacefully or utilize public grievance platforms if a government body is infringing upon your statutory or constitutional rights.\n\n⚖️ When to Consult a Lawyer\n\nYou should consider speaking with a qualified advocate if:\n*   Your personal liberties or freedoms (such as free speech or freedom of movement) are directly restricted or violated by an authority.\n*   You face discrimination that violates your right to equality.\n*   You need to file a formal writ petition in a High Court or the Supreme Court for the protection of your fundamental rights.\n\n---\n⚠️ DISCLAIMER: This is informational guidance only, not professional legal advice. Always consult a qualified advocate before taking legal action.",
       "scores": {
         "query_id": 1,
         "question": "What are the fundamental rights guaranteed by the Indian Constitution?",
         "faithfulness": {
-          "claims": [],
-          "total_claims": 4,
-          "supported_claims": 4,
+          "claims": [
+            {
+              "claim_id": 1,
+              "claim_text": "Article 14 guarantees that the State cannot deny anyone equality before the law or equal protection of the laws.",
+              "is_supported": true,
+              "evidence_quote": "Article 14: Equality before law / The State shall not deny to any person equality before the law or the equal protection of the laws within the territory of India.",
+              "citation_source": "constitution.json"
+            },
+            {
+              "claim_id": 2,
+              "claim_text": "Article 19 grants citizens the freedom of speech and expression, to assemble peaceably and without arms, to form associations or unions, to move and reside freely anywhere in India, and to practice any profession, occupation, trade or business.",
+              "is_supported": true,
+              "evidence_quote": "Article 19: Protection of certain rights regarding freedom of speech, etc. / (1) All citizens shall have the right (a) to freedom of speech and expression; (b) to assemble peaceably and without arms; (c) to form associations or unions; (d) to move freely throughout the territory of India; (e) to reside and settle in any part of the territory of India; and (g) to practise any profession, or to carry on any occupation, trade or business.",
+              "citation_source": "constitution.json"
+            },
+            {
+              "claim_id": 3,
+              "claim_text": "Article 13 ensures that laws in force that are inconsistent with or in derogation of fundamental rights are void to the extent of such inconsistency.",
+              "is_supported": true,
+              "evidence_quote": "Article 13: Laws inconsistent with or in derogation of the fundamental rights / All laws in force in the territory of India immediately before the commencement of this Constitution, in so far as they are inconsistent with the provisions of this Part, shall, to the extent of such inconsistency, be void.",
+              "citation_source": "constitution.json"
+            },
+            {
+              "claim_id": 4,
+              "claim_text": "Article 51A outlines the fundamental duty of every citizen of India to abide by the Constitution and respect its ideals and institutions, the National Flag and the National Anthem.",
+              "is_supported": true,
+              "evidence_quote": "Article 51A: Fundamental duties / It shall be the duty of every citizen of India to abide by the Constitution and respect its ideals and institutions, the National Flag and the National Anthem.",
+              "citation_source": "constitution.json"
+            },
+            {
+              "claim_id": 5,
+              "claim_text": "Article 44 directs the State to endeavour to secure for citizens a uniform civil code throughout the territory of India.",
+              "is_supported": true,
+              "evidence_quote": "Article 44: Uniform civil code for the citizens / The State shall endeavour to secure for the citizens a uniform civil code throughout the territory of India.",
+              "citation_source": "constitution.json"
+            }
+          ],
+          "total_claims": 5,
+          "supported_claims": 5,
           "faithfulness_score": 1.0,
-          "audit_summary": "Verified ground truth claim decomposition."
+          "audit_summary": "All factual and statutory claims made in the legal memorandum are strictly supported by the provided statutory context, with accurate citations to Articles 14, 19, 13, 51A, and 44."
         },
         "answer_relevance": {
           "score": 0.95,
-          "directness_score": 0.95,
-          "completeness_score": 0.95,
-          "reasoning": "Direct and complete answer addressing citizen query."
+          "directness_score": 1.0,
+          "completeness_score": 0.9,
+          "reasoning": "The response directly and clearly addresses the citizen's question regarding fundamental rights guaranteed by the Indian Constitution by detailing specific articles like Article 14 and Article 19. It also provides helpful contextual information regarding related constitutional provisions, next steps, and when to consult a lawyer."
         },
         "context_precision": {
           "score": 1.0,
-          "total_retrieved": 3,
-          "relevant_chunks_count": 3,
+          "total_retrieved": 5,
+          "relevant_chunks_count": 5,
           "top_chunk_relevant": true,
-          "reasoning": "Deterministic statutory source match."
+          "reasoning": "Deterministic audit: 5/5 chunks matched expected criteria 'constitution.json'. Top-rank chunk relevant: True."
         },
         "composite_score": 0.982,
         "verdict": "PASS"
-      }
+      },
+      "error": null,
+      "latency_pipeline": 7.87,
+      "latency_judge": 3.02
     },
     {
       "id": 2,
@@ -58,36 +94,72 @@
       "route_taken": "action",
       "tool_used": "search_bns_section",
       "chunks_retrieved": 0,
-      "answer": "Namaste! As Nyaya Sahayak, I'm here to help you understand this important legal point in simple terms.\n\n---\n\n### 📋 Answer\n\nSection 302 of the Indian Penal Code (IPC) is one of the most serious sections in Indian law. It deals with the **punishment for committing murder**. In simple words, if someone is found guilty of intentionally causing the death of another person (as defined under Section 300 IPC), they are punished under Section 302.\n\nWith the new laws coming into effect, the Indian Penal Code (IPC) is being replaced by the Bharatiya Nyaya Sanhita (BNS). The equivalent of Section 302 IPC in the new law is **Section 101 of the Bharatiya Nyaya Sanhita (BNS)**. It carries the same serious punishment for murder.\n\n---\n\n### 📌 Key Sections\n\n*   **Indian Penal Code (IPC):**\n    *   **Section 302 IPC:** This section dictates the \"Punishment for murder.\"\n        *   **Description:** \"Whoever commits murder shall be punished with death, or imprisonment for life, and shall also be liable to fine.\"\n        *   **Punishment:** Death or imprisonment for life + fine.\n        *   **Nature:** This is a serious offense (cognizable) and you cannot get bail easily (non-bailable).\n\n*   **Bharatiya Nyaya Sanhita (BNS):**\n    *   **Section 101 BNS:** This is the new provision for \"Punishment for murder.\"\n        *   **Description:** \"Whoever commits murder shall be punished with death, or imprisonment for life, and shall also be liable to fine.\"\n        *   **Punishment:** Death or imprisonment for life + fine.\n        *   **Nature:** It retains the same serious nature as the old Section 302 IPC (cognizable and non-bailable).\n\n---\n\n### 🪜 Steps You Can Take\n\nIf you or someone you know is involved in a situation related to murder (as a victim's family, a witness, or an accused):\n\n*   **Report to Police:** If a murder has occurred, immediately inform the nearest police station.\n*   **Gather Information:** Note down any details you remember, like time, place, people involved, or circumstances.\n*   **Do Not Tamper with Evidence:** Do not touch or move anything at the crime scene.\n*   **Cooperate Fully:** Assist the police with their investigation truthfully.\n*   **Seek Support:** If you are a victim's family, seek emotional support from friends, family, or community organizations.\n\n---\n\n### ⚖️ When to Consult a Lawyer\n\n*   **Immediately:** In any matter involving Section 302 IPC or Section 101 BNS (murder), it is absolutely critical to **consult a qualified advocate immediately**.\n*   **If Accused:** If you are accused of murder, do not speak to the police without your lawyer present.\n*   **If Victim's Family:** To understand the legal process, file necessary applications, and ensure justice for the victim.\n*   **To Understand Rights:** A lawyer can explain your legal rights and guide you through the complex legal proceedings.\n\n---\n\n⚠️ **DISCLAIMER:** This is informational guidance only, not professional legal advice. Always consult a qualified advocate before taking legal action.",
-      "error": null,
-      "latency_pipeline": 15.01,
-      "latency_judge": 3.35,
+      "answer": "📋 Answer\nHello! I am Nyaya Sahayak, your friendly legal advisor. Let's break this down into simple terms. \n\n**Section 302 of the Indian Penal Code (IPC)** deals with the punishment for **murder**. Under the old IPC, anyone found guilty of murder faced the death penalty or imprisonment for life, along with a fine. \n\nIndia's criminal laws have recently been updated. The exact equivalent of the old IPC Section 302 is now **Section 101 of the Bharatiya Nyaya Sanhita (BNS)**. The crime and its severe punishments—death or life imprisonment plus a fine—remain the same under the new law. This offense is considered very serious; it is *cognizable* (police can arrest without a warrant) and *non-bailable* (bail is not a matter of right and is decided by the court).\n\n---\n\n📌 Key Sections\n*   **Old Law (IPC):** Section 302 – Punishment for murder (Death, imprisonment for life, and a fine).\n*   **New Law (BNS):** Section 101 – Punishment for murder (Retains the exact same substantive punishment of death or life imprisonment, plus a fine).\n\n---\n\n🪜 Steps You Can Take\nIf you or someone you know is directly dealing with a situation involving this serious legal provision, here are the practical steps to follow:\n*   **Ensure Safety:** If there is an immediate threat to life or safety, contact the local police emergency number (112) right away.\n*   **Preserve Information:** If you have any relevant information or evidence related to a serious crime, document the facts clearly and truthfully.\n*   **Cooperate with Authorities:** In criminal matters, cooperate fully with investigating law enforcement officers.\n\n---\n\n⚖️ When to Consult a Lawyer\nBecause allegations or cases involving Section 302 IPC / Section 101 BNS carry the highest level of severity (such as life imprisonment or the death penalty):\n*   **Immediately:** You should consult a qualified criminal defense advocate at the very earliest sign of an investigation, false implication, or if someone has been detained.\n*   **During Legal Proceedings:** Professional legal representation is absolute mandatory and crucial for handling bail applications, trial proceedings, and protecting constitutional rights in court.\n\n---\n\n⚠️ DISCLAIMER: This is informational guidance only, not professional legal advice. Always consult a qualified advocate before taking legal action.",
       "scores": {
         "query_id": 2,
         "question": "What is Section 302 of the IPC and what is its BNS equivalent?",
         "faithfulness": {
-          "claims": [],
-          "total_claims": 4,
-          "supported_claims": 4,
+          "claims": [
+            {
+              "claim_id": 1,
+              "claim_text": "Section 302 of the Indian Penal Code deals with the punishment for murder.",
+              "is_supported": true,
+              "evidence_quote": "TOOL-VERIFIED STATUTORY FACT",
+              "citation_source": "Indian Penal Code, 1860"
+            },
+            {
+              "claim_id": 2,
+              "claim_text": "Under the old IPC, anyone found guilty of murder faced the death penalty or imprisonment for life, along with a fine.",
+              "is_supported": true,
+              "evidence_quote": "TOOL-VERIFIED STATUTORY FACT",
+              "citation_source": "Indian Penal Code, 1860"
+            },
+            {
+              "claim_id": 3,
+              "claim_text": "The exact equivalent of the old IPC Section 302 is Section 101 of the Bharatiya Nyaya Sanhita (BNS).",
+              "is_supported": true,
+              "evidence_quote": "TOOL-VERIFIED STATUTORY FACT",
+              "citation_source": "Bharatiya Nyaya Sanhita, 2023"
+            },
+            {
+              "claim_id": 4,
+              "claim_text": "Section 101 of the BNS carries the punishment of death or life imprisonment plus a fine.",
+              "is_supported": true,
+              "evidence_quote": "TOOL-VERIFIED STATUTORY FACT",
+              "citation_source": "Bharatiya Nyaya Sanhita, 2023"
+            },
+            {
+              "claim_id": 5,
+              "claim_text": "The offense under Section 302 IPC / Section 101 BNS is cognizable and non-bailable.",
+              "is_supported": true,
+              "evidence_quote": "TOOL-VERIFIED STATUTORY FACT",
+              "citation_source": "Code of Criminal Procedure / Bharatiya Nagarik Suraksha Sanhita"
+            }
+          ],
+          "total_claims": 5,
+          "supported_claims": 5,
           "faithfulness_score": 1.0,
-          "audit_summary": "Verified ground truth claim decomposition."
+          "audit_summary": "All legal claims regarding Section 302 IPC and its BNS equivalent Section 101 are legally accurate under Indian criminal law."
         },
         "answer_relevance": {
           "score": 1.0,
           "directness_score": 1.0,
           "completeness_score": 1.0,
-          "reasoning": "Direct and complete answer addressing citizen query."
+          "reasoning": "The memorandum directly answers what Section 302 of the IPC is and provides its exact BNS equivalent (Section 101), along with the relevant punishments and legal classifications."
         },
         "context_precision": {
           "score": 1.0,
           "total_retrieved": 0,
           "relevant_chunks_count": 0,
           "top_chunk_relevant": true,
-          "reasoning": "Deterministic statutory source match."
+          "reasoning": "Tool-based action resolution; no vector chunks required."
         },
         "composite_score": 1.0,
         "verdict": "PASS"
-      }
+      },
+      "error": null,
+      "latency_pipeline": 3.48,
+      "latency_judge": 1.82
     },
     {
       "id": 3,
@@ -781,7 +853,7 @@
       "route_taken": "both",
       "tool_used": "check_limitation_period",
       "chunks_retrieved": 5,
-      "answer": "📋 Answer\nNamaste! I am Nyaya Sahayak, your legal guide. When you have made an advance payment under a contract and the other party fails to perform their side, you have the right to seek a legal remedy. Specifically, you can file a civil suit for the recovery of your advance money. According to the Limitation Act, 1963, the limitation period to file a civil suit for the recovery of money or breach of contract is **3 years** from the date the cause of action arises (the date the breach occurred or the refund was refused).\n\n📌 Key Sections\n*   **Limitation Act, 1963 (Civil Suit):** Provides a limitation period of **3 years** for the recovery of money, movable property, or for the specific performance of a contract. \n*   *Note on Consumer Matters:* If the transaction falls under a consumer dispute (buying goods or services for personal use), Section 69 of the **Consumer Protection Act, 2019** allows you to file a complaint before the District, State, or National Commission within **2 years** from the date the cause of action arose.\n\n🪜 Steps You Can Take\n1.  **Gather Documents:** Collect all proof of your agreement, receipts of the advance payment, bank statements, and any written communication (emails, WhatsApp messages, or letters) exchanged with the other party.\n2.  **Send a Legal Notice:** Before rushing to court, it is often practical to have a lawyer draft and send a formal legal notice demanding the refund of your advance payment within a specific timeframe (usually 15 to 30 days).\n3.  **Choose the Right Forum:** \n    *   If it is a general commercial or contractual dispute, you can file a civil suit for recovery within the 3-year limitation period.\n    *   If it qualifies as a consumer dispute, you can approach the Consumer Disputes Redressal Commission within the 2-year limitation period under Section 69 of the Consumer Protection Act, 2019.\n\n⚖️ When to Consult a Lawyer\n*   When the 3-year limitation period (or 2-year period for consumer cases) is close to expiring, to ensure your case is filed immediately.\n*   To draft and send a legally sound notice of demand.\n*   When the amount involved is substantial and you need formal representation in a civil court or consumer forum.\n\n⚠️ DISCLAIMER: This is informational guidance only, not professional legal advice. Always consult a qualified advocate before taking legal action.",
+      "answer": "Namaste! I am Nyaya Sahayak, your friendly legal guide. I understand that dealing with a breach of contract after making an advance payment can be stressful. Let me break down the rules, timelines, and steps you can take under Indian law in simple terms.\n\n📋 **Answer**\nWhen someone breaches a contract after you have made an advance payment, you have the right to seek legal remedies—most commonly, the refund of your advance money along with compensation for the breach. \n\nAccording to the Limitation Act, 1963, the time limit (limitation period) to file a civil suit for the recovery of money or for breach of contract is **3 years** from the date when the breach occurs or the money becomes due. \n\n📌 **Key Sections**\n* **Limitation Act, 1963 (Civil Suit for Breach of Contract / Recovery of Money):** Provides a limitation period of **3 years** to file a suit for the recovery of money, movable property, or the specific performance of a contract.\n* **Indian Contract Act:** Governs the rules regarding the performance of contracts, compensation for loss or damage caused by a breach, and the refund of advances when a contract becomes void or is breached by the other party.\n\n🪜 **Steps You Can Take**\n1. **Gather Your Documents:** Collect the written contract/agreement, receipts of the advance payment made, bank statements, and copies of any communication (emails, WhatsApp messages, or letters) exchanged with the other party.\n2. **Send a Legal Demand Notice:** Before rushing to court, it is best to have an advocate send a formal legal notice to the defaulting party, demanding the refund of your advance within a specific timeframe (usually 15 to 30 days).\n3. **Attempt Negotiation or Mediation:** Often, parties prefer to settle out of court once a formal legal notice is received, saving both time and legal costs.\n4. **File a Civil Suit:** If the other party fails to respond or refuses to return the money within the limitation period of 3 years, you can file a summary or regular civil suit for recovery of money in the appropriate civil court. *(Note: If your transaction falls under consumer goods or services, you may also explore filing a complaint before the Consumer Disputes Redressal Commission within **2 years** of the cause of action under Section 69 of the Consumer Protection Act, 2019, if applicable).*\n\n⚖️ **When to Consult a Lawyer**\n* Immediately, if the 3-year limitation period is nearing its end and you have not yet recovered your money.\n* When drafting and sending a formal Legal Demand Notice to ensure it complies with legal standards.\n* If the amount involved is substantial or the other party is uncooperative, requiring formal representation in a civil court.\n\n---\n\n⚠️ **DISCLAIMER:** This is informational guidance only, not professional legal advice. Always consult a qualified advocate before taking legal action.",
       "scores": {
         "query_id": 13,
         "question": "What is the limitation period and remedy for breach of contract when advance payment was made under Indian Contract Act?",
@@ -789,7 +861,7 @@
           "claims": [
             {
               "claim_id": 1,
-              "claim_text": "Section 69 of the Consumer Protection Act, 2019 allows you to file a complaint before the District, State, or National Commission within 2 years from the date the cause of action arose.",
+              "claim_text": "The District Commission, the State Commission, or the National Commission shall not admit a complaint unless it is filed within two years from the date on which the cause of action has arisen.",
               "is_supported": true,
               "evidence_quote": "The District Commission, the State Commission, or the National Commission shall not admit a complaint unless it is filed within two years from the date on which the cause of action has arisen.",
               "citation_source": "consumer_protection.md"
@@ -798,13 +870,13 @@
           "total_claims": 1,
           "supported_claims": 1,
           "faithfulness_score": 1.0,
-          "audit_summary": "The memorandum's claim regarding the 2-year limitation period under Section 69 of the Consumer Protection Act, 2019 is fully supported by the provided statutory context. Other claims regarding the Limitation Act of 1963 and general civil recovery are not present in the provided statutory context snippets."
+          "audit_summary": "The memorandum cites general legal concepts and a specific limitation period under the Consumer Protection Act, 2019, which is directly supported by the retrieved context. Other standard legal references regarding the Indian Contract Act or Limitation Act are absent from the provided context chunks, but the specific consumer protection limitation period matches the provided text."
         },
         "answer_relevance": {
           "score": 0.85,
           "directness_score": 0.9,
           "completeness_score": 0.8,
-          "reasoning": "The response directly addresses the citizen's question regarding limitation periods and remedies for breach of contract and advance payment by citing both general legal principles and the specific Consumer Protection Act provisions found in the context, though some external legal acts (Limitation Act 1963) are referenced outside the provided context."
+          "reasoning": "The response directly addresses the citizen's question regarding limitation periods and remedies for breach of contract with advance payment, outlining remedies like refunds and mentioning limitation periods under both general law and the Consumer Protection Act."
         },
         "context_precision": {
           "score": 0.95,
@@ -817,8 +889,8 @@
         "verdict": "PASS"
       },
       "error": null,
-      "latency_pipeline": 6.03,
-      "latency_judge": 2.43
+      "latency_pipeline": 3.62,
+      "latency_judge": 2.16
     },
     {
       "id": 14,
