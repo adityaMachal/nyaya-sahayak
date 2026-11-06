@@ -24,7 +24,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 from core.memory import ConversationMemory
-from core.pipeline import ask_with_trace, app as langgraph_app
+from core.pipeline import ask_with_trace, app as langgraph_app, stream_pipeline
 
 
 # ── Lifespan ───────────────────────────────────────────────────────
@@ -33,6 +33,12 @@ from core.pipeline import ask_with_trace, app as langgraph_app
 async def lifespan(app: FastAPI):
     """Startup/shutdown lifecycle events."""
     print("🏛️  Nyaya Sahayak API starting...")
+    try:
+        from rag.retrieval import prewarm_retrieval_engine
+        prewarm_retrieval_engine()
+        print("⚡ RAG Embedding Model & ChromaDB pre-warmed onto GPU.")
+    except Exception as e:
+        print(f"⚠️  RAG pre-warming warning: {e}")
     yield
     print("🏛️  Nyaya Sahayak API shutting down.")
 
@@ -135,15 +141,17 @@ async def ask_question(req: AskRequest):
 async def ask_stream(req: AskRequest):
     """Ask a legal question with Server-Sent Events (SSE) streaming.
 
-    Streams real-time agent execution steps as each LangGraph node completes.
-    The Next.js frontend can use the Fetch API's ReadableStream to consume this.
+    Streams real-time agent execution steps as each pipeline step completes,
+    followed by real-time token streaming from the Explainer agent.
+    The Next.js frontend uses Fetch API ReadableStream to consume this.
 
     SSE Event Types:
-        - session:  { session_id }          — Sent immediately
-        - trace:    { node, route?, ... }   — After each node completes
-        - answer:   { content }             — Final answer from Explainer
-        - done:     {}                      — Stream complete
-        - error:    { message }             — If an error occurs
+        - session:      { session_id }          — Sent immediately
+        - trace:        { node, route?, ... }   — After each agent node completes
+        - answer_chunk: { content }             — Real-time streamed token chunks
+        - answer:       { content }             — Final complete answer from Explainer
+        - done:         {}                      — Stream complete
+        - error:        { message }             — If an error occurs
     """
 
     async def event_generator():
@@ -153,44 +161,8 @@ async def ask_stream(req: AskRequest):
         yield f"data: {json.dumps({'type': 'session', 'session_id': memory.session_id})}\n\n"
 
         try:
-            # Build initial state
-            history_text = memory.format_history_for_prompt()
-            initial_state = {
-                "messages": [{"role": "user", "content": req.question}],
-                "user_question": req.question,
-                "conversation_history": history_text,
-                "next_step": "",
-                "retrieved_chunks": [],
-                "query_variants": [],
-                "tool_results": [],
-                "tool_name_used": "",
-                "final_answer": ""
-            }
-
-            # Use astream with "updates" mode to get node-by-node outputs
-            async for event in langgraph_app.astream(initial_state, stream_mode="updates"):
-                for node_name, node_output in event.items():
-                    if node_name == "supervisor":
-                        yield f"data: {json.dumps({'type': 'trace', 'node': 'supervisor', 'route': node_output.get('next_step', '')})}\n\n"
-
-                    elif node_name == "researcher":
-                        yield f"data: {json.dumps({'type': 'trace', 'node': 'researcher', 'chunks': len(node_output.get('retrieved_chunks', [])), 'variants': node_output.get('query_variants', [])})}\n\n"
-
-                    elif node_name == "action":
-                        yield f"data: {json.dumps({'type': 'trace', 'node': 'action', 'tool': node_output.get('tool_name_used', '')})}\n\n"
-
-                    elif node_name == "both":
-                        yield f"data: {json.dumps({'type': 'trace', 'node': 'both', 'chunks': len(node_output.get('retrieved_chunks', [])), 'tool': node_output.get('tool_name_used', '')})}\n\n"
-
-                    elif node_name == "explainer":
-                        answer = node_output.get("final_answer", "")
-                        # Save to memory
-                        memory.add_turn("user", req.question)
-                        memory.add_turn("assistant", answer)
-                        yield f"data: {json.dumps({'type': 'answer', 'content': answer})}\n\n"
-
-            yield f"data: {json.dumps({'type': 'done'})}\n\n"
-
+            async for event in stream_pipeline(req.question, memory):
+                yield f"data: {json.dumps(event)}\n\n"
         except Exception as e:
             yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
 
