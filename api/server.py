@@ -52,14 +52,17 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# ── CORS (for Next.js frontend) ───────────────────────────────────
+# ── CORS (for Next.js frontend & production deployments) ───────────
 
-CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
+raw_origins = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000")
+CORS_ORIGINS = [origin.strip() for origin in raw_origins.split(",") if origin.strip()]
+is_wildcard = "*" in CORS_ORIGINS
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=CORS_ORIGINS,
-    allow_credentials=True,
+    allow_origins=["*"] if is_wildcard else CORS_ORIGINS,
+    allow_origin_regex=None if is_wildcard else r"https://.*\.vercel\.app",
+    allow_credentials=not is_wildcard,
     allow_methods=["*"],
     allow_headers=["*"],
 )

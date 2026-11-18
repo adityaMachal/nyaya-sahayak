@@ -1,0 +1,54 @@
+name: Backend CI & RAG Verification
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'api/**'
+      - 'core/**'
+      - 'rag/**'
+      - 'mcp_server/**'
+      - 'pyproject.toml'
+      - 'uv.lock'
+      - '.github/workflows/ci-backend.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'api/**'
+      - 'core/**'
+      - 'rag/**'
+      - 'mcp_server/**'
+      - 'pyproject.toml'
+      - 'uv.lock'
+  workflow_dispatch:
+
+jobs:
+  backend-check:
+    name: Lint & Module Integrity
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install Astral UV
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Set up Python 3.12
+        run: uv python install 3.12
+
+      - name: Sync Dependencies
+        run: uv sync --frozen --no-dev
+
+      - name: Verify Health & Import Integrity
+        run: |
+          uv run python -c "
+          from api.server import app
+          from core.pipeline import ask, supervisor_node, fast_path_route
+          from rag.retrieval import query_database
+          print('Nyaya Sahayak Backend core modules imported successfully.')
+          "

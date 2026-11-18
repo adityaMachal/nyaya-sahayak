@@ -32,7 +32,9 @@ def _get_model() -> SentenceTransformer:
     global _model
     if _model is None:
         try:
-            _model = SentenceTransformer(config.EMBEDDING_MODEL, device=config.DEVICE)
+            import torch
+            device = config.DEVICE if (config.DEVICE == "cuda" and torch.cuda.is_available()) else "cpu"
+            _model = SentenceTransformer(config.EMBEDDING_MODEL, device=device)
         except Exception:
             # Fallback to CPU if CUDA is unavailable
             _model = SentenceTransformer(config.EMBEDDING_MODEL, device='cpu')

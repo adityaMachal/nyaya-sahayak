@@ -1,0 +1,50 @@
+# syntax=docker/dockerfile:1
+FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
+
+# Setup non-root user (UID 1000) for Hugging Face Spaces & security
+RUN useradd -m -u 1000 user
+
+WORKDIR /app
+
+# Pre-create app and cache directories with proper user ownership
+RUN mkdir -p /app/data /app/.cache /home/user/.cache && \
+    chown -R user:user /app /home/user
+
+# Switch to non-root user before creating virtualenv to avoid layer duplication
+USER user
+
+# Configure environment variables
+ENV HOME=/home/user \
+    VIRTUAL_ENV=/app/.venv \
+    PATH="/app/.venv/bin:/home/user/.local/bin:$PATH" \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    HF_HOME=/app/.cache/huggingface \
+    PORT=7860 \
+    UV_CACHE_DIR=/tmp/uv-cache
+
+# Install dependencies into virtual environment using CPU-optimized PyTorch
+# (eliminates ~4.8GB of NVIDIA CUDA 12/13 binaries for cloud CPU execution)
+COPY --chown=user:user pyproject.toml ./
+RUN uv venv /app/.venv && \
+    uv pip install --no-cache torch --index-url https://download.pytorch.org/whl/cpu && \
+    uv pip install --no-cache -r pyproject.toml
+
+# Pre-cache SentenceTransformer embedding model weights during build
+# so the container never needs to download weights on startup
+RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2', device='cpu')"
+
+# Copy application code and pre-baked statutory vector store with non-root ownership
+COPY --chown=user:user api/ ./api/
+COPY --chown=user:user core/ ./core/
+COPY --chown=user:user rag/ ./rag/
+COPY --chown=user:user mcp_server/ ./mcp_server/
+COPY --chown=user:user data/raw/ ./data/raw/
+COPY --chown=user:user data/chroma_db/ ./data/chroma_db/
+COPY --chown=user:user main.py README.md ./
+
+# Expose container port (Hugging Face Spaces default: 7860)
+EXPOSE 7860
+
+# Run FastAPI server directly from the virtual environment
+CMD ["sh", "-c", "uvicorn api.server:app --host 0.0.0.0 --port ${PORT:-7860}"]

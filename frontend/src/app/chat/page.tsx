@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { API_BASE_URL } from "@/config/api";
 
 interface SessionInfo {
   session_id: string;
@@ -183,7 +184,7 @@ function ChatWorkspace() {
   // Fetch real sessions from SQLite backend
   const refreshSessions = async () => {
     try {
-      const res = await fetch("http://localhost:8000/api/sessions");
+      const res = await fetch(`${API_BASE_URL}/api/sessions`);
       if (res.ok) {
         const data = await res.json();
         setSessions(data);
@@ -214,7 +215,7 @@ function ChatWorkspace() {
     setActiveSessionId(sessionId);
     try {
       const res = await fetch(
-        `http://localhost:8000/api/sessions/${sessionId}/history`
+        `${API_BASE_URL}/api/sessions/${sessionId}/history`
       );
       if (res.ok) {
         const history: ChatMessage[] = await res.json();
@@ -256,7 +257,7 @@ function ChatWorkspace() {
   const handleDeleteSession = async (e: React.MouseEvent, sessionId: string) => {
     e.stopPropagation();
     try {
-      await fetch(`http://localhost:8000/api/sessions/${sessionId}`, {
+      await fetch(`${API_BASE_URL}/api/sessions/${sessionId}`, {
         method: "DELETE",
       });
       if (activeSessionId === sessionId) {
@@ -302,7 +303,7 @@ function ChatWorkspace() {
     let assistantMessageBuffer = "";
 
     try {
-      const res = await fetch("http://localhost:8000/api/ask/stream", {
+      const res = await fetch(`${API_BASE_URL}/api/ask/stream`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -463,7 +464,7 @@ function ChatWorkspace() {
         ...prev,
         {
           role: "assistant",
-          content: `⚠️ **BACKEND OFFLINE OR STREAM DISCONNECTED**\n\nCould not connect to FastAPI server at \`http://localhost:8000/api/ask/stream\`.\n\n**To start the live multi-agent backend engine:**\n\`\`\`bash\ncd /home/adi/Documents/projects/nyaya-sahayak\nuv run python -m uvicorn api.server:app --port 8000 --reload\n\`\`\`\n\nOnce running, re-submit your inquiry to receive real-time statutory synthesis with FastMCP tool execution.`,
+          content: `⚠️ **BACKEND OFFLINE OR STREAM DISCONNECTED**\n\nCould not connect to FastAPI server at \`${API_BASE_URL}/api/ask/stream\`.\n\n**To start the live multi-agent backend engine:**\n\`\`\`bash\ncd /home/adi/Documents/projects/nyaya-sahayak\nuv run python -m uvicorn api.server:app --port 8000 --reload\n\`\`\`\n\nOnce running, re-submit your inquiry to receive real-time statutory synthesis with FastMCP tool execution.`,
           timestamp: new Date().toLocaleTimeString([], {
             hour: "2-digit",
             minute: "2-digit",

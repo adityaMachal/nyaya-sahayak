@@ -1,0 +1,24 @@
+.git
+.github
+.venv
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache
+.coverage
+
+# Frontend (separate build)
+frontend/
+node_modules/
+.next/
+
+# Local databases & secrets
+data/conversations.db*
+.env
+.env.*
+
+# Temporary / scratch files
+merge_*.txt
+frontend_commits.txt
+*.log

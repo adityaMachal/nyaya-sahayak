@@ -2,13 +2,14 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { API_BASE_URL } from "@/config/api";
 
 export default function Navbar() {
   const [engineConnected, setEngineConnected] = useState<boolean | null>(null);
 
   useEffect(() => {
-    // Check if the local FastAPI backend is active
-    fetch("http://localhost:8000/docs", { method: "HEAD", mode: "no-cors" })
+    // Check if the backend is active
+    fetch(`${API_BASE_URL}/docs`, { method: "HEAD", mode: "no-cors" })
       .then(() => setEngineConnected(true))
       .catch(() => setEngineConnected(false));
   }, []);
