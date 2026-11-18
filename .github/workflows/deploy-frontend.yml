@@ -51,7 +51,7 @@ jobs:
   deploy-to-vercel:
     name: Deploy to Vercel
     needs: build-and-test
-    if: github.ref == 'refs/heads/main' && secrets.VERCEL_TOKEN != ''
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     defaults:
       run:
