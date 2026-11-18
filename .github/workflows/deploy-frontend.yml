@@ -4,6 +4,13 @@ on:
   push:
     branches:
       - main
+      - deploy-docker
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/deploy-frontend.yml'
+  pull_request:
+    branches:
+      - main
     paths:
       - 'frontend/**'
       - '.github/workflows/deploy-frontend.yml'
