@@ -7,10 +7,20 @@ PROJECT_ROOT = str(Path(__file__).parent.parent)
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-from fastmcp import FastMCP
-from rag.retrieval import query_database, format_chunks_for_display
+try:
+    from fastmcp import FastMCP
+    mcp = FastMCP("Nyaya Sahayak Legal Tools")
+except ImportError:
+    class _MockMCP:
+        def tool(self, *args, **kwargs):
+            return lambda fn: fn
+        def resource(self, *args, **kwargs):
+            return lambda fn: fn
+        def run(self, *args, **kwargs):
+            pass
+    mcp = _MockMCP()
 
-mcp = FastMCP("Nyaya Sahayak Legal Tools")
+from rag.retrieval import query_database, format_chunks_for_display
 
 DATA_DIR = Path(__file__).parent.parent / "data" / "raw"
 
