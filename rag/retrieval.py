@@ -46,7 +46,13 @@ def _get_collection() -> chromadb.Collection:
     global _collection
     if _collection is None:
         client = chromadb.PersistentClient(path=config.CHROMA_PERSIST_DIR)
-        _collection = client.get_collection(name=config.COLLECTION_NAME)
+        try:
+            _collection = client.get_collection(name=config.COLLECTION_NAME)
+        except Exception:
+            from rag.indexing import build_index
+            print("ChromaDB collection not found; building from raw statutory data...")
+            build_index()
+            _collection = client.get_collection(name=config.COLLECTION_NAME)
     return _collection
 
 
