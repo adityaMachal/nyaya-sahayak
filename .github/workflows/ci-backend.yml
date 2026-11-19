@@ -52,7 +52,7 @@ jobs:
         env:
           GEMINI_API_KEY: "ci-dummy-key-for-import-check"
         run: |
-          uv run python -c "
+          .venv/bin/python -c "
           from api.server import app
           from core.pipeline import ask, supervisor_node, fast_path_route
           from rag.retrieval import query_database
