@@ -44,9 +44,9 @@ jobs:
 
       - name: Install CPU PyTorch & Dependencies
         run: |
-          uv venv
+          uv venv --python 3.12
           uv pip install torch --index-url https://download.pytorch.org/whl/cpu
-          uv pip install .
+          uv pip install -r pyproject.toml
 
       - name: Verify Health & Import Integrity
         env:

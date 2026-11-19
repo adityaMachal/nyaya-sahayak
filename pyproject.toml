@@ -18,3 +18,8 @@ dependencies = [
     "uvicorn>=0.34.0",
     "sse-starlette>=2.2.0",
 ]
+
+[tool.setuptools.packages.find]
+include = ["api*", "core*", "rag*", "mcp_server*"]
+exclude = ["frontend*", "data*", "evaluation*"]
+
