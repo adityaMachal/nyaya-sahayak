@@ -46,6 +46,8 @@ jobs:
         run: uv sync --frozen --no-dev
 
       - name: Verify Health & Import Integrity
+        env:
+          GEMINI_API_KEY: "ci-dummy-key-for-import-check"
         run: |
           uv run python -c "
           from api.server import app
