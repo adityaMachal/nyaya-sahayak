@@ -14,7 +14,7 @@ __pycache__/
 htmlcov/
 
 # --- Database & Persistent Storage ---
-data/chroma_db/
+!data/chroma_db/
 data/conversations.db
 *.db-wal
 *.db-shm
