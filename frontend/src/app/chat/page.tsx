@@ -448,16 +448,17 @@ function ChatWorkspace() {
           }
         }
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       // Backend offline notice
       setEngineOnline(false);
       const totalElapsed = (Date.now() - startTime) / 1000;
+      const errorMsg = err instanceof Error ? err.message : String(err);
       setTrace((prev) => ({
         ...prev,
         currentStep: 4,
         isStreaming: false,
         latency: Number(totalElapsed.toFixed(2)),
-        statusText: `Backend server unreachable (${err.message}). Ensure FastAPI is running on port 8000.`,
+        statusText: `Backend server unreachable (${errorMsg}). Ensure FastAPI is running on port 8000.`,
       }));
 
       setMessages((prev) => [
@@ -480,6 +481,7 @@ function ChatWorkspace() {
       queryHandledRef.current = true;
       handleSendMessage(initialQuery);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialQuery]);
 
   return (
