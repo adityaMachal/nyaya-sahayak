@@ -34,13 +34,16 @@ RUN uv venv /app/.venv && \
 # so the container never needs to download weights on startup
 RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2', device='cpu')"
 
-# Copy application code and pre-baked statutory vector store with non-root ownership
+# Copy application code and raw statutory text files
 COPY --chown=user:user api/ ./api/
 COPY --chown=user:user core/ ./core/
 COPY --chown=user:user rag/ ./rag/
 COPY --chown=user:user mcp_server/ ./mcp_server/
 COPY --chown=user:user data/raw/ ./data/raw/
-COPY --chown=user:user data/chroma_db/ ./data/chroma_db/
+
+# Build ChromaDB vector database directly during container build
+RUN python -c "from rag.indexing import build_index; build_index()"
+
 COPY --chown=user:user main.py README.md ./
 
 # Expose container port (Hugging Face Spaces default: 7860)

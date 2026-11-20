@@ -1,14 +1,3 @@
----
-title: Nyaya Sahayak API
-emoji: 🏛️
-colorFrom: red
-colorTo: gray
-sdk: gradio
-sdk_version: 5.20.0
-app_file: app.py
-pinned: false
----
-
 # Nyaya Sahayak (न्याय सहायक)
 
 ### Multi-Agent Indian Legal AI Assistant
