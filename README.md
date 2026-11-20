@@ -8,6 +8,19 @@ The platform addresses the transition from legacy Indian legal frameworks (India
 
 ---
 
+## Live Production Deployments
+
+Nyaya Sahayak is deployed across a decoupled multi-cloud architecture operating strictly within perpetual zero-cost tiers ($0/month forever):
+
+| Component | Target Platform | Environment | Live Endpoint | Status |
+|:---|:---|:---|:---|:---:|
+| **Frontend Web Client** | Vercel Edge Network | Next.js 16 (App Router) | [nyaya-sahayak-sigma.vercel.app](https://nyaya-sahayak-sigma.vercel.app/) | **Live (100% Operational)** |
+| **Multi-Agent Backend API** | Render.com Web Service | Docker (Python 3.12-slim) | [nyaya-sahayak-hrl0.onrender.com](https://nyaya-sahayak-hrl0.onrender.com) | **Live (HTTP 200 OK)** |
+| **Interactive API Documentation** | Render.com Swagger UI | OpenAPI 3.1 / FastAPI | [nyaya-sahayak-hrl0.onrender.com/docs](https://nyaya-sahayak-hrl0.onrender.com/docs) | **Interactive Docs** |
+| **System Health Check** | Render.com Monitoring | JSON Status (`{"status":"ok"}`) | [nyaya-sahayak-hrl0.onrender.com/api/health](https://nyaya-sahayak-hrl0.onrender.com/api/health) | **Healthy (210ms)** |
+
+---
+
 ## Architecture Overview
 
 Nyaya Sahayak separates concerns across four specialized autonomous agent nodes coordinated by a deterministic StateGraph:
@@ -45,6 +58,27 @@ Nyaya Sahayak separates concerns across four specialized autonomous agent nodes 
 2. **Researcher Node (`core/pipeline.py`):** Generates multi-query expansions and queries the local ChromaDB vector store. Deduplicates retrieved chunks via O(1) hash-sets and enforces Pydantic data contracts.
 3. **Action Node (`core/pipeline.py`):** Executes deterministic statutory tools via native Gemini Function Declarations. Routes queries to in-memory callables with sub-millisecond execution.
 4. **Explainer Node (`core/pipeline.py`):** Ingests structured statutory context and tool outputs, synthesizing a four-part legal memorandum: Direct Answer, Statutory Provisions, Procedural Next Steps, and Advocate Consultation Criteria.
+
+### Cloud Deployment Topology
+
+```
+[ Citizen Web Client ]
+         │
+         ▼ (Vercel Edge Global CDN)
+[ Next.js 16 Technical Dossier ]
+         │
+         ▼ HTTPS / Server-Sent Events (SSE)
+[ Render.com Docker Web Service ]
+  ├── FastAPI Application (api/server.py)
+  ├── LangGraph Deterministic DAG (core/pipeline.py)
+  ├── Direct Statutory Fast-Path Router (<1ms regex)
+  ├── In-Memory FastMCP Statutory Tool Registry (<0.3ms)
+  ├── Embedded ChromaDB Vector Engine (CPU PyTorch)
+  └── SQLite Multi-Turn Memory (WAL Mode)
+         │
+         ▼ HTTPS (Google GenAI SDK)
+[ Google Gemini 3.8 Flash Cloud LLM ]
+```
 
 ---
 
